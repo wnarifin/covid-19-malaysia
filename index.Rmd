@@ -15,7 +15,7 @@ library(plotly)
 library(broom)
 library(data.world)
 
-# covid_my = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_full.csv")
+# covid_my_full = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_full.csv")
 covid_my_full = read.csv("covid-19_my_full.csv")
 covid_my_full$date = as.Date(covid_my_full$date)
 
@@ -38,10 +38,12 @@ data_plot = rbind(data_plot, data_week)
 data_plot$new_cases_predicted = round(predict(model1, data_plot, type = "response"))
 data_plot$total_cases_predicted = cumsum(data_plot$new_cases_predicted)
 
-# based on growth in 7 days, get the slope
-increase_day = (data_plot[data_plot$date == date_now + 7, "total_cases_predicted"] - data_plot[data_plot$date == date_now, "total_cases_predicted"]) / 7
-rate = (data_plot[data_plot$date == date_now + 4, "total_cases_predicted"] + increase_day) / data_plot[data_plot$date == date_now + 4, "total_cases_predicted"]
-days_to_double = log(2) / log(rate)
+# based on predicted total counts in the past 7 days + future 7 days
+data_double = data_plot[tail(which(data_plot$date >= date_now - 7), 14),]
+data_double$days = 1:14
+model_ = glm(total_cases_predicted ~ days, family = "quasipoisson", data_double); summary(model_)
+# log(2) / log(exp(coef(model_)[2]))
+days_to_double = log(2) / coef(model_)[2]
 
 model1_rr = tidy(model1, conf.int = T, exponentiate = T)
 
