@@ -253,7 +253,7 @@ valueBox(
 ### total cases today  {.value-box}
 ```{r}
 valueBox(
-  value = data_plot[data_plot$date == date_now, "total_cases_predicted"],
+  value = data_plot[data_plot$date == date_now, "total_cases"],
   #icon = "fa-area-chart",
   color = "orange"
 )
@@ -262,7 +262,8 @@ valueBox(
 ### total cases expected in a week  {.value-box}
 ```{r}
 valueBox(
-  value = data_plot[data_plot$date == date_now + 7, "total_cases_predicted"],
+  value = data_plot[data_plot$date == date_now + 7, "total_cases_predicted"] - data_plot[data_plot$date == date_now, "total_cases_predicted"] + data_plot[data_plot$date == date_now, "total_cases"],
+  #value = data_plot[data_plot$date == date_now + 7, "total_cases_predicted"],
   #icon = "fa-area-chart",
   color = "orange"
 )
@@ -350,7 +351,7 @@ valueBox(
 ### total deaths today  {.value-box}
 ```{r}
 valueBox(
-  value = data_plot1[data_plot1$date == date_now, "total_deaths_predicted"],
+  value = data_plot1[data_plot1$date == date_now, "total_deaths"],
   #icon = "fa-area-chart",
   color = "red"
 )
@@ -359,7 +360,8 @@ valueBox(
 ### total deaths expected in a week  {.value-box}
 ```{r}
 valueBox(
-  value = data_plot1[data_plot1$date == date_now + 7, "total_deaths_predicted"],
+  data_plot1[data_plot1$date == date_now + 7, "total_deaths_predicted"] - data_plot1[data_plot1$date == date_now, "total_deaths_predicted"] + data_plot1[data_plot1$date == date_now, "total_deaths"],
+  #value = data_plot1[data_plot1$date == date_now + 7, "total_deaths_predicted"],
   #icon = "fa-area-chart",
   color = "red"
 )
@@ -395,7 +397,7 @@ ggplotly(plot4)
 Row
 ---
 
-### **Significant factors:** 1. Total cases (`r paste0("Rate ratio: ", round(model2_rr[2, "estimate"],2), " (95% CI: ", round(model2_rr[2, "conf.low"],2), ", ", round(model2_rr[2, "conf.high"],2), ")")` per increase in case), 2. Days since movement control order (`r paste0("Rate ratio: ", round(model2_rr[3, "estimate"],2), " (95% CI: ", round(model2_rr[3, "conf.low"],2), ", ", round(model2_rr[3, "conf.high"],2), ")")` per day) based on a quasipoisson regression model. However, because of a small sample size for deaths data, the estimated deaths are likely to be inaccurate. Number of cases in ICU and repiratory support are likely to be better predictors, but we do not have complete data from MOH. {.value-box}
+### **Significant factors:** 1. Total cases (`r paste0("Rate ratio: ", round(model2_rr[2, "estimate"],2), " (95% CI: ", round(model2_rr[2, "conf.low"],2), ", ", round(model2_rr[2, "conf.high"],2), ")")` per increase in case), 2. Days since movement control order (`r paste0("Rate ratio: ", round(model2_rr[3, "estimate"],2), " (95% CI: ", round(model2_rr[3, "conf.low"],2), ", ", round(model2_rr[3, "conf.high"],2), ")")` per day) based on a quasipoisson regression model. However, because of a small sample size for the death data, the estimated number of deaths are likely to be inaccurate. The number of cases in ICU and respiratory support are likely to be better predictors, but we do not have complete data from MOH. {.value-box}
 ```{r}
 valueBox(
   value = "",
