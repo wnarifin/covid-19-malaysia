@@ -13,8 +13,8 @@ library(flexdashboard)
 library(ggplot2)
 library(plotly)
 library(broom)
-library(data.world)
 
+# --- Malaysia ---
 # covid_my_full = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_full.csv")
 covid_my_full = read.csv("covid-19_my_full.csv")
 covid_my_full$date = as.Date(covid_my_full$date)
@@ -23,17 +23,17 @@ sel_location = "Malaysia"
 sel_date = max(covid_my_full$date) - 1  # display date, offset - 1
 
 date_now = max(covid_my_full$date)
+days_first_now = max(covid_my_full$days_first)
 days_tabligh_now = max(covid_my_full$days_tabligh)
 days_mco_now = max(covid_my_full$days_mco)
 
 # cases
-model1 = glm(new_cases ~ days_tabligh + days_mco, family = "quasipoisson",  data = covid_my_full)
-summary(model1)
-coef(model1)
-
+model1 = glm(new_cases ~ days_tabligh + days_mco + recover, family = "quasipoisson",  data = covid_my_full)
+model_r = glm(recover ~ days_first, "quasipoisson", data = covid_my_full); summary(model_r)
+recover_ = round(predict(model_r, list(days_first = days_first_now + 1:7), "response"))
 data_week = data.frame(date = date_now + 1:7, new_cases = rep(NA, 7), total_cases = rep(NA, 7),
-                       days_tabligh = days_tabligh_now + 1:7, days_mco = days_mco_now + 1:7)
-data_plot = subset(covid_my_full, select = c(date, new_cases, total_cases, days_tabligh, days_mco))
+                       days_tabligh = days_tabligh_now + 1:7, days_mco = days_mco_now + 1:7, recover = recover_)
+data_plot = subset(covid_my_full, select = c(date, new_cases, total_cases, days_tabligh, days_mco, recover))
 data_plot = rbind(data_plot, data_week)
 data_plot$new_cases_predicted = round(predict(model1, data_plot, type = "response"))
 data_plot$total_cases_predicted = cumsum(data_plot$new_cases_predicted)
@@ -41,27 +41,34 @@ data_plot$total_cases_predicted = cumsum(data_plot$new_cases_predicted)
 # based on predicted total counts in the past 7 days + future 7 days
 data_double = data_plot[tail(which(data_plot$date >= date_now - 7), 14),]
 data_double$days = 1:14
-model_ = glm(total_cases_predicted ~ days, family = "quasipoisson", data_double); summary(model_)
+model_ = glm(total_cases_predicted ~ days, family = "quasipoisson", data_double)
 # log(2) / log(exp(coef(model_)[2]))
 days_to_double = log(2) / coef(model_)[2]
 
 model1_rr = tidy(model1, conf.int = T, exponentiate = T)
 
 # deaths
-model2 = glm(new_deaths ~ total_cases + days_mco, family = "quasipoisson", data = covid_my_full); summary(model2)
-# must include mco as the start of intervention
-# total_cases to indicate the burden to healthcare
-coef(model2)
+model2 = glm(new_deaths ~ icu, family = "quasipoisson", data = covid_my_full)
+# icu to predict new_deaths
 
-# have to use total_cases_predicted as total_cases
-data_week1 = data.frame(date = date_now + 1:7, total_cases = tail(data_plot$total_cases_predicted, 7),
-                        new_deaths = rep(NA, 7), total_deaths = rep(NA, 7), days_mco = days_mco_now + 1:7)
-data_plot1 = subset(covid_my_full, select = c(date, total_cases, new_deaths, total_deaths, days_mco))
+# predict icu count, better linear model
+model_i = glm(icu ~ new_cases, data = covid_my_full)
+
+# have to use icu_predicted + 7 days
+icu_ = round(predict(model_i, list(new_cases = tail(data_plot$new_cases_predicted, 7)), "response"))
+data_week1 = data.frame(date = date_now + 1:7, new_deaths = rep(NA, 7), total_deaths = rep(NA, 7), icu = icu_)
+data_plot1 = subset(covid_my_full, select = c(date, new_deaths, total_deaths, icu))
 data_plot1 = rbind(data_plot1, data_week1)
 data_plot1$new_deaths_predicted = round(predict(model2, data_plot1, type = "response"))
 data_plot1$total_deaths_predicted = cumsum(data_plot1$new_deaths_predicted)
 
 model2_rr = tidy(model2, conf.int = T, exponentiate = T)
+
+# --- state ---
+# covid_my_state = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_state.csv")
+covid_my_state = read.csv("covid-19_my_state.csv")
+covid_my_state$date = as.Date(covid_my_state$date)
+data_plots = covid_my_state
 ```
 
 Overview
@@ -278,6 +285,11 @@ Row
 plot1 = ggplot(data_plot) +
   geom_col(aes(x = date, y = new_cases), fill = "red", alpha = 0.7) +
   geom_line(aes(x = date, y = new_cases_predicted), color = "blue", alpha = 0.7) +
+  scale_x_date(date_breaks = "14 day", date_labels = "%d/%m/%y") +
+  geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "Tabligh", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "MCO",angle = 90) +
   labs(x = "Date", y = "New cases") +
   theme_light()
 plot1
@@ -290,6 +302,11 @@ ggplotly(plot1)
 plot2 = ggplot(data_plot) +
   geom_col(aes(x = date, y = total_cases), fill = "red", alpha = 0.7) +
   geom_line(aes(x = date, y = total_cases_predicted), color = "blue", alpha = 0.7) +
+  scale_x_date(date_breaks = "14 day", date_labels = "%d/%m/%y") +
+  geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "Tabligh", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "MCO",angle = 90) +
   labs(x = "Date", y = "Cumulative cases") +
   theme_light()
 plot2
@@ -299,7 +316,7 @@ ggplotly(plot2)
 Row
 ---
 
-### **Significant factors:** 1. Days since Tabligh gathering (`r paste0("Rate ratio: ", round(model1_rr[2, "estimate"],2), " [95% CI: ", round(model1_rr[2, "conf.low"],2), ", ", round(model1_rr[2, "conf.high"],2), "]")` per day), 2. Days since movement control order (`r paste0("Rate ratio: ", round(model1_rr[3, "estimate"],2), " [95% CI: ", round(model1_rr[3, "conf.low"],2), ", ", round(model1_rr[3, "conf.high"],2), "]")` per day) based on a quasipoisson regression model. {.value-box}
+### **Significant factors:** 1. Days since Tabligh gathering (`r paste0("Rate ratio: ", round(model1_rr[2, "estimate"],2), " [95% CI: ", round(model1_rr[2, "conf.low"],2), ", ", round(model1_rr[2, "conf.high"],2), "]")` per day), 2. Days since movement control order (`r paste0("Rate ratio: ", round(model1_rr[3, "estimate"],2), " [95% CI: ", round(model1_rr[3, "conf.low"],2), ", ", round(model1_rr[3, "conf.high"],2), "]")` per day), 3. Number of cases recovered (`r paste0("Rate ratio: ", round(model1_rr[4, "estimate"],2), " [95% CI: ", round(model1_rr[4, "conf.low"],2), ", ", round(model1_rr[4, "conf.high"],2), "]")` per case recovered) based on a quasipoisson regression model. {.value-box}
 ```{r}
 valueBox(
   value = "",
@@ -376,7 +393,13 @@ Row
 plot3 = ggplot(data_plot1) +
   geom_col(aes(x = date, y = new_deaths), fill = "red", alpha = 0.7) +
   geom_line(aes(x = date, y = new_deaths_predicted), color = "blue", alpha = 0.7) +
-  labs(x = "Date", y = "New deaths", title = paste0("New deaths by ", format(sel_date, "%d %B %Y"))) +
+  scale_x_date(date_breaks = "14 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(limits = c(0, max(data_plot1$new_deaths, na.rm=T)+50)) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "Tabligh", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "MCO",angle = 90) +
+  labs(x = "Date", y = "New deaths") +
   theme_light()
 plot3
 ggplotly(plot3)
@@ -388,7 +411,13 @@ ggplotly(plot3)
 plot4 = ggplot(data_plot1) +
   geom_col(aes(x = date, y = total_deaths), fill = "red", alpha = 0.7) +
   geom_line(aes(x = date, y = total_deaths_predicted), color = "blue", alpha = 0.7) +
-  labs(x = "Date", y = "Cumulative deaths", title = paste0("Total deaths by ", format(sel_date, "%d %B %Y"))) +
+  scale_x_date(date_breaks = "14 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(limits = c(0, max(data_plot1$new_deaths, na.rm=T)+50)) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "Tabligh", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "MCO",angle = 90) +
+  labs(x = "Date", y = "Cumulative deaths") +
   theme_light()
 plot4
 ggplotly(plot4)
@@ -397,21 +426,56 @@ ggplotly(plot4)
 Row
 ---
 
-### **Significant factors:** 1. Total cases (`r paste0("Rate ratio: ", round(model2_rr[2, "estimate"],2), " (95% CI: ", round(model2_rr[2, "conf.low"],2), ", ", round(model2_rr[2, "conf.high"],2), ")")` per increase in case), 2. Days since movement control order (`r paste0("Rate ratio: ", round(model2_rr[3, "estimate"],2), " (95% CI: ", round(model2_rr[3, "conf.low"],2), ", ", round(model2_rr[3, "conf.high"],2), ")")` per day) based on a quasipoisson regression model. However, because of a small sample size for the death data, the estimated number of deaths are likely to be inaccurate. The number of cases in ICU and respiratory support are likely to be better predictors, but we do not have complete data from MOH. {.value-box}
+### **Significant factor:** 1. Number of cases in ICU (`r paste0("Rate ratio: ", round(model2_rr[2, "estimate"],2), " (95% CI: ", round(model2_rr[2, "conf.low"],2), ", ", round(model2_rr[2, "conf.high"],2), ")")` per increase in case in ICU). {.value-box}
 ```{r}
 valueBox(
   value = "",
 )
 ```
 
-<!-- Statistics by State -->
-<!-- =================== -->
+Cases by State
+==============
+
+Row
+---
+
+### `r paste0("New cases by state on ", format(sel_date, "%d %B %Y"), " hover for details.")`
+```{r}
+# daily
+plot5 = ggplot(data = data_plots) +
+  geom_col(aes(x=date, y=new_cases, fill=state)) +
+  scale_x_date(date_labels = "%d/%m/%y", limits = c(min(data_plots$date), NA)) +
+  scale_fill_discrete(name="State") +
+  labs(x="Date", y="New cases") + 
+  theme_bw()
+plot5
+ggplotly(plot5)
+```
+
+### `r paste0("Total cases by state on ", format(sel_date, "%d %B %Y"), " hover for details.")`
+```{r}
+# cumulative
+plot6 = ggplot(data = data_plots) +
+  geom_col(aes(x=date, y=total_cases, fill=state)) +
+  scale_x_date(date_labels = "%d/%m/%y") +
+  scale_fill_discrete(name="State") +
+  labs(x="Date", y="Cumulative cases") + 
+  theme_bw()
+plot6
+ggplotly(plot6)
+```
+
+<!-- Deaths by State -->
+<!-- ============== -->
+
+<!-- Row -->
+<!-- --- -->
 
 Data and Our Team
 =================
 
-Column
-------
+Row
+---
 
 ###
 
@@ -449,4 +513,3 @@ We built this dashboard using
   - ggplot2
   - plotly
   - broom
-  - data.world
