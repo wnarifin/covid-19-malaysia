@@ -6,6 +6,7 @@ output:
     vertical_layout: fill
     social: menu
     source_code: https://github.com/wnarifin/covid-19-malaysia/
+    theme: default
 ---
 
 ```{r setup, include=FALSE}
@@ -70,19 +71,21 @@ covid_my_state = read.csv("covid-19_my_state.csv")
 covid_my_state$date = as.Date(covid_my_state$date)
 data_plots = covid_my_state
 ```
+by `r paste0(format(sel_date, "%d %B %Y"), ", 12PM")`.
 
 Overview
 ========
 
-Row
----
+<!-- Row -->
+<!-- --- -->
 
-### `r paste0("by ", format(sel_date, "%d %B %Y"), ", 12PM")` {.value-box}
-```{r}
-valueBox(
-  value = "Covid-19 Statistics",
-)
-```
+<!-- ### `r paste0("by ", format(sel_date, "%d %B %Y"), ", 12PM")` {.value-box} -->
+<!-- ```{r} -->
+<!-- valueBox( -->
+<!--   # value = "Covid-19 Statistics", -->
+<!--   value = "" -->
+<!-- ) -->
+<!-- ``` -->
 
 Row
 ---
@@ -279,7 +282,7 @@ valueBox(
 Row
 ---
 
-### `r paste0("New cases by ", format(sel_date, "%d %B %Y"))`
+### New cases, hover over the graph for details.
 ```{r}
 # daily
 plot1 = ggplot(data_plot) +
@@ -296,7 +299,7 @@ plot1
 ggplotly(plot1)
 ```
 
-### `r paste0("Total cases by ", format(sel_date, "%d %B %Y"))`
+### Total cases, hover over the graph for details.
 ```{r}
 # cumulative
 plot2 = ggplot(data_plot) +
@@ -387,7 +390,7 @@ valueBox(
 Row
 ---
 
-### `r paste0("New deaths by ", format(sel_date, "%d %B %Y"))`
+### New deaths, hover over the graph for details.
 ```{r}
 # daily
 plot3 = ggplot(data_plot1) +
@@ -405,7 +408,7 @@ plot3
 ggplotly(plot3)
 ```
 
-### `r paste0("Total deaths by ", format(sel_date, "%d %B %Y"))`
+### Total deaths, hover over the graph for details.
 ```{r}
 # cumulative
 plot4 = ggplot(data_plot1) +
@@ -439,7 +442,7 @@ Cases by State
 Row
 ---
 
-### `r paste0("New cases by state on ", format(sel_date, "%d %B %Y"), " hover for details.")`
+### New cases, hover over the graph for details.
 ```{r}
 # daily
 plot5 = ggplot(data = data_plots) +
@@ -452,7 +455,7 @@ plot5
 ggplotly(plot5)
 ```
 
-### `r paste0("Total cases by state on ", format(sel_date, "%d %B %Y"), " hover for details.")`
+### Total cases, hover over the graph for details.
 ```{r}
 # cumulative
 plot6 = ggplot(data = data_plots) +
@@ -465,11 +468,37 @@ plot6
 ggplotly(plot6)
 ```
 
-<!-- Deaths by State -->
-<!-- ============== -->
+Deaths by State
+==============
 
-<!-- Row -->
-<!-- --- -->
+Row
+---
+
+### New deaths, hover over the graph for details.
+```{r}
+# daily
+plot7 = ggplot(data = data_plots) +
+  geom_col(aes(x=date, y=new_deaths, fill=state)) +
+  scale_x_date(date_breaks = "3 day", date_labels = "%d/%m/%y") +
+  scale_fill_discrete(name="State") +
+  labs(x="Date", y="Cumulative cases") + 
+  theme_light()
+plot7
+ggplotly(plot7)
+```
+
+### Total deaths, hover over the graph for details.
+```{r}
+# cumulative
+plot8 = ggplot(data = data_plots) +
+  geom_col(aes(x=date, y=total_deaths, fill=state)) +
+  scale_x_date(date_breaks = "3 day", date_labels = "%d/%m/%y") +
+  scale_fill_discrete(name="State") +
+  labs(x="Date", y="Cumulative cases") + 
+  theme_light()
+plot8
+ggplotly(plot8)
+```
 
 Data and Our Team
 =================
@@ -481,12 +510,12 @@ Row
 
 **The data are sourced from:**
 
-- Ourworldindata: https://covid.ourworldindata.org/data/ecdc/full_data.csv (up to 21/3/2020)
+- Ourworldindata: https://covid.ourworldindata.org/data/ecdc/full_data.csv (up to 21/3/2020).
 - Ministry of Health of Malaysia press statement: https://kpkesihatan.com/, http://www.moh.gov.my/index.php/pages/view/2019-ncov-wuhan-kenyataan-akhbar, https://www.facebook.com/kkmcprc/
 - Our edited data can be accessed from https://data.world/wnarifin/covid-19-my/
-- Last updated on `r Sys.Date()`.
+- Last updated on `r format(Sys.Date(), "%d %B %Y")`.
 
-**Epidemiology Modelling Team Members, School of Medical Sciences, Universiti Sains Malaysia (USM):**
+**Epidemiology Modelling Team members, School of Medical Sciences, Universiti Sains Malaysia (USM):**
 
 Department of Community Medicine:
 
@@ -501,6 +530,16 @@ Department of Community Medicine:
 Biostatistics and Research Methodology Unit:
 
 - [Dr. Wan Nor Arifin](https://wnarifin.github.io/)
+
+Jabatan Kesihatan Negeri, Pahang:
+
+- Dr. Sahrol Azmi
+
+Pusat Data PPKT Kampus Kesihatan:
+
+- Mohd Fadzali Bakar
+- Mohd Faizal Abdul Manaf
+- Ahmad Syakiren Mazalan 
 
 **Disclaimer: We and USM are not responsible for any damage or inconvenience caused directly or indirectly by the use of this dashboard.**
 
