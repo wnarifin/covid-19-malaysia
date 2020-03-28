@@ -20,7 +20,7 @@ covid_my_full = read.csv("covid-19_my_full.csv")
 covid_my_full$date = as.Date(covid_my_full$date)
 
 sel_location = "Malaysia"
-sel_date = max(covid_my_full$date) - 1  # display date, offset - 1
+sel_date = max(covid_my_full$date)
 
 date_now = max(covid_my_full$date)
 days_first_now = max(covid_my_full$days_first)
@@ -447,7 +447,7 @@ plot5 = ggplot(data = data_plots) +
   scale_x_date(date_labels = "%d/%m/%y", limits = c(min(data_plots$date), NA)) +
   scale_fill_discrete(name="State") +
   labs(x="Date", y="New cases") + 
-  theme_bw()
+  theme_light()
 plot5
 ggplotly(plot5)
 ```
@@ -460,7 +460,7 @@ plot6 = ggplot(data = data_plots) +
   scale_x_date(date_labels = "%d/%m/%y") +
   scale_fill_discrete(name="State") +
   labs(x="Date", y="Cumulative cases") + 
-  theme_bw()
+  theme_light()
 plot6
 ggplotly(plot6)
 ```
