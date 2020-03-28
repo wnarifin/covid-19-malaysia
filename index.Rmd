@@ -20,6 +20,12 @@ library(broom)
 covid_my_full = read.csv("covid-19_my_full.csv")
 covid_my_full$date = as.Date(covid_my_full$date)
 
+# --- state ---
+covid_my_state = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_state.csv")
+# covid_my_state = read.csv("covid-19_my_state.csv")
+covid_my_state$date = as.Date(covid_my_state$date)
+data_plots = covid_my_state
+
 sel_location = "Malaysia"
 sel_date = max(covid_my_full$date)
 
@@ -64,28 +70,11 @@ data_plot1$new_deaths_predicted = round(predict(model2, data_plot1, type = "resp
 data_plot1$total_deaths_predicted = cumsum(data_plot1$new_deaths_predicted)
 
 model2_rr = tidy(model2, conf.int = T, exponentiate = T)
-
-# --- state ---
-# covid_my_state = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_state.csv")
-covid_my_state = read.csv("covid-19_my_state.csv")
-covid_my_state$date = as.Date(covid_my_state$date)
-data_plots = covid_my_state
 ```
 by `r paste0(format(sel_date, "%d %B %Y"), ", 12PM")`.
 
 Overview
 ========
-
-<!-- Row -->
-<!-- --- -->
-
-<!-- ### `r paste0("by ", format(sel_date, "%d %B %Y"), ", 12PM")` {.value-box} -->
-<!-- ```{r} -->
-<!-- valueBox( -->
-<!--   # value = "Covid-19 Statistics", -->
-<!--   value = "" -->
-<!-- ) -->
-<!-- ``` -->
 
 Row
 ---
@@ -481,7 +470,7 @@ plot7 = ggplot(data = data_plots) +
   geom_col(aes(x=date, y=new_deaths, fill=state)) +
   scale_x_date(date_breaks = "3 day", date_labels = "%d/%m/%y") +
   scale_fill_discrete(name="State") +
-  labs(x="Date", y="Cumulative cases") + 
+  labs(x="Date", y="New deaths") + 
   theme_light()
 plot7
 ggplotly(plot7)
@@ -494,7 +483,7 @@ plot8 = ggplot(data = data_plots) +
   geom_col(aes(x=date, y=total_deaths, fill=state)) +
   scale_x_date(date_breaks = "3 day", date_labels = "%d/%m/%y") +
   scale_fill_discrete(name="State") +
-  labs(x="Date", y="Cumulative cases") + 
+  labs(x="Date", y="Cumulative deaths") + 
   theme_light()
 plot8
 ggplotly(plot8)
