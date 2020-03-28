@@ -21,8 +21,8 @@ covid_my_full = read.csv("covid-19_my_full.csv")
 covid_my_full$date = as.Date(covid_my_full$date)
 
 # --- state ---
-covid_my_state = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_state.csv")
-# covid_my_state = read.csv("covid-19_my_state.csv")
+# covid_my_state = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_state.csv")
+covid_my_state = read.csv("covid-19_my_state.csv")
 covid_my_state$date = as.Date(covid_my_state$date)
 data_plots = covid_my_state
 
@@ -271,7 +271,7 @@ valueBox(
 Row
 ---
 
-### New cases, hover over the graph for details.
+### New cases, hover/tap on the graph for details.
 ```{r}
 # daily
 plot1 = ggplot(data_plot) +
@@ -288,7 +288,7 @@ plot1
 ggplotly(plot1)
 ```
 
-### Total cases, hover over the graph for details.
+### Total cases, hover/tap on the graph for details.
 ```{r}
 # cumulative
 plot2 = ggplot(data_plot) +
@@ -379,7 +379,7 @@ valueBox(
 Row
 ---
 
-### New deaths, hover over the graph for details.
+### New deaths, hover/tap on the graph for details.
 ```{r}
 # daily
 plot3 = ggplot(data_plot1) +
@@ -397,7 +397,7 @@ plot3
 ggplotly(plot3)
 ```
 
-### Total deaths, hover over the graph for details.
+### Total deaths, hover/tap on the graph for details.
 ```{r}
 # cumulative
 plot4 = ggplot(data_plot1) +
@@ -431,7 +431,7 @@ Cases by State
 Row
 ---
 
-### New cases, hover over the graph for details.
+### New cases, hover/tap on the graph for details.
 ```{r}
 # daily
 plot5 = ggplot(data = data_plots) +
@@ -444,7 +444,7 @@ plot5
 ggplotly(plot5)
 ```
 
-### Total cases, hover over the graph for details.
+### Total cases, hover/tap on the graph for details.
 ```{r}
 # cumulative
 plot6 = ggplot(data = data_plots) +
@@ -463,7 +463,7 @@ Deaths by State
 Row
 ---
 
-### New deaths, hover over the graph for details.
+### New deaths, hover/tap on the graph for details.
 ```{r}
 # daily
 plot7 = ggplot(data = data_plots) +
@@ -476,7 +476,7 @@ plot7
 ggplotly(plot7)
 ```
 
-### Total deaths, hover over the graph for details.
+### Total deaths, hover/tap on the graph for details.
 ```{r}
 # cumulative
 plot8 = ggplot(data = data_plots) +
