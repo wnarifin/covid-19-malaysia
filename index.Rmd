@@ -91,7 +91,7 @@ valueBox(
 ### Active cases {.value-box}
 ```{r}
 valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "total_cases"] - covid_my_full[dim(covid_my_full)[1], "total_recover"],
+  value = covid_my_full[dim(covid_my_full)[1], "total_cases"] - covid_my_full[dim(covid_my_full)[1], "total_recover"] - covid_my_full[dim(covid_my_full)[1], "total_deaths"],
   icon = "fa-area-chart",
   color = "orange"
 )
