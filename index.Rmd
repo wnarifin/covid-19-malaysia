@@ -35,12 +35,10 @@ days_tabligh_now = max(covid_my_full$days_tabligh)
 days_mco_now = max(covid_my_full$days_mco)
 
 # cases
-model1 = glm(new_cases ~ days_tabligh + days_mco + recover, family = "quasipoisson",  data = covid_my_full)
-model_r = glm(recover ~ days_first, "quasipoisson", data = covid_my_full); summary(model_r)
-recover_ = round(predict(model_r, list(days_first = days_first_now + 1:7), "response"))
+model1 = glm(new_cases ~ days_tabligh + days_mco, family = "quasipoisson",  data = covid_my_full)
 data_week = data.frame(date = date_now + 1:7, new_cases = rep(NA, 7), total_cases = rep(NA, 7),
-                       days_tabligh = days_tabligh_now + 1:7, days_mco = days_mco_now + 1:7, recover = recover_)
-data_plot = subset(covid_my_full, select = c(date, new_cases, total_cases, days_tabligh, days_mco, recover))
+                       days_tabligh = days_tabligh_now + 1:7, days_mco = days_mco_now + 1:7)
+data_plot = subset(covid_my_full, select = c(date, new_cases, total_cases, days_tabligh, days_mco))
 data_plot = rbind(data_plot, data_week)
 data_plot$new_cases_predicted = round(predict(model1, data_plot, type = "response"))
 data_plot$total_cases_predicted = cumsum(data_plot$new_cases_predicted)
@@ -317,7 +315,7 @@ ggplotly(plot2)
 Row
 ---
 
-### **Significant factors:** 1. Days since Tabligh gathering (`r paste0("Rate ratio: ", round(model1_rr[2, "estimate"],2), " [95% CI: ", round(model1_rr[2, "conf.low"],2), ", ", round(model1_rr[2, "conf.high"],2), "]")` per day), 2. Days since movement control order (`r paste0("Rate ratio: ", round(model1_rr[3, "estimate"],2), " [95% CI: ", round(model1_rr[3, "conf.low"],2), ", ", round(model1_rr[3, "conf.high"],2), "]")` per day), 3. Number of cases recovered (`r paste0("Rate ratio: ", round(model1_rr[4, "estimate"],2), " [95% CI: ", round(model1_rr[4, "conf.low"],2), ", ", round(model1_rr[4, "conf.high"],2), "]")` per case recovered) based on a quasipoisson regression model. {.value-box}
+### **Significant factors:** 1. Days since Tabligh gathering (`r paste0("Rate ratio: ", round(model1_rr[2, "estimate"],2), " [95% CI: ", round(model1_rr[2, "conf.low"],2), ", ", round(model1_rr[2, "conf.high"],2), "]")` per day), 2. Days since movement control order (`r paste0("Rate ratio: ", round(model1_rr[3, "estimate"],2), " [95% CI: ", round(model1_rr[3, "conf.low"],2), ", ", round(model1_rr[3, "conf.high"],2), "]")` per day) based on a quasipoisson regression model. {.value-box}
 ```{r}
 valueBox(
   value = "",
