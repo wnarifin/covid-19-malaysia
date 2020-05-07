@@ -544,7 +544,7 @@ We built this dashboard using
 - RStudio
 - Packages:
 
-  - flexdashboard
-  - ggplot2
-  - plotly
-  - broom
+    - flexdashboard
+    - ggplot2
+    - plotly
+    - broom
