@@ -165,7 +165,7 @@ valueBox(
 )
 ```
 
-### require breathing Support {.value-box}
+### require breathing support {.value-box}
 ```{r}
 valueBox(
   value = covid_my_full[dim(covid_my_full)[1], "support"],
