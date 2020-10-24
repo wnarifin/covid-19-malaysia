@@ -7,7 +7,7 @@ output:
     social: menu
     source_code: https://github.com/wnarifin/covid-19-malaysia/
     navbar:
-      - {title: "SIR Model", href: "https://wnarifin.github.io/covid-19-malaysia/sir.html", align: right}
+      - {title: "SIR Model", href: "https://wnarifin.github.io/covid-19-malaysia-sir/", align: right}
     theme: default
 ---
 
