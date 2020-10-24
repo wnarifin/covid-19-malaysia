@@ -6,6 +6,8 @@ output:
     vertical_layout: fill
     social: menu
     source_code: https://github.com/wnarifin/covid-19-malaysia/
+    navbar:
+      - {title: "SIR Model", href: "https://wnarifin.github.io/covid-19-malaysia/sir.html", align: right}
     theme: default
 ---
 
