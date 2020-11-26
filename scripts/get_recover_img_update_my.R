@@ -49,7 +49,6 @@ img_data_state = img_data %>% image_resize("2000x")
 img_data_state
 # OCR
 recover_img = image_ocr(img_data_state, language = "msa")
-cat(recover)
 recover_data = str_split(recover_img, "[\n]", simplify = T)  # split at \n
 recover_data = recover_data[grep("kes", recover_data)]  # extract index with kes
 recover_data = str_c(recover_data, collapse = " ")

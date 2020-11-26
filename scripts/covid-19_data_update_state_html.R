@@ -6,6 +6,10 @@ library(rvest)
 library(stringr)
 library(xlsx)
 library(readxl)
+library(tesseract)
+library(magick)
+library(magrittr)
+library(stringr)
 
 my_date = Sys.Date()
 # my_date = "2020-10-28"  # for specific date
@@ -52,7 +56,7 @@ img_node = html_nodes(kpk_page, "img")
 img_loc = grep("discaj", img_node, ignore.case = T)  # get node with discaj
 img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
 img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
-download.file(img_link, destfile = paste0("recover_data_state/img", my_date, ".", img_ext))
+download.file(img_link, destfile = paste0("recover_data_state/img/", my_date, ".", img_ext))
 # system(paste0("wget -c ", img_link, " -O recover_data_state/", my_date, ".", img_ext))
 
 # table
