@@ -57,7 +57,10 @@ img_loc = grep("discaj", img_node, ignore.case = T)  # get node with discaj
 img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
 img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
 download.file(img_link, destfile = paste0("recover_data_state/img/", my_date, ".", img_ext))
-# system(paste0("wget -c ", img_link, " -O recover_data_state/", my_date, ".", img_ext))
+system(paste0("wget -c ", img_link, " -O recover_data_state/", my_date, ".", img_ext))
+setwd("recover_data_state/recover_R/")
+source("get_recover_img_update_my.R")
+setwd("../../")
 
 # table
 # table, 1-malay, 2-english
@@ -108,6 +111,20 @@ loc1 = grep("kes.*yang telah pulih", html_text(my_text), ignore.case = T, perl =
 if (is.na(loc1[2]) | is.na(recover)) {
   loc = grep("kes.*sembuh", html_text(my_text), ignore.case = T, perl = T)
   sembuh = str_split(html_text(my_text[loc]), "kes[,]", simplify = T)[1]
+  sembuh_ = str_split(sembuh, "sebanyak", simplify = T)[2]
+  recover = as.numeric(str_trim(sembuh_))
+  if(is.na(recover)) {
+    recover = str_split(str_trim(sembuh_), " ", simplify = T);
+    recover = as.numeric(str_remove_all(gsub("[()]", "", recover), ","))
+  } # remove comma from number > 1K
+  if(is.na(recover)) {
+    recover = str_split(str_trim(sembuh_), " ", simplify = T)[2];
+    recover = as.numeric(str_remove_all(gsub("[()]", "", recover), ","))
+  }
+}
+if (length(recover) > 1) {
+  loc = grep("kes.*sembuh", html_text(my_text), ignore.case = T, perl = T)
+  sembuh = str_split(html_text(my_text[loc]), "kes[.]", simplify = T)[1]
   sembuh_ = str_split(sembuh, "sebanyak", simplify = T)[2]
   recover = as.numeric(str_trim(sembuh_))
   if(is.na(recover)) {
