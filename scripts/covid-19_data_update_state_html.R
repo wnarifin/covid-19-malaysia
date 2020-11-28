@@ -57,7 +57,7 @@ img_loc = grep("discaj", img_node, ignore.case = T)  # get node with discaj
 img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
 img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
 download.file(img_link, destfile = paste0("recover_data_state/img/", my_date, ".", img_ext))
-system(paste0("wget -c ", img_link, " -O recover_data_state/", my_date, ".", img_ext))
+# system(paste0("wget -c ", img_link, " -O recover_data_state/", my_date, ".", img_ext))
 setwd("recover_data_state/recover_R/")
 source("get_recover_img_update_my.R")
 setwd("../../")
