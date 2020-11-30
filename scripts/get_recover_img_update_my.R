@@ -45,7 +45,7 @@ data_recover_kelantan
 
 # Read data for all states, more difficult
 # img_data_state = img_data %>% image_scale("794x446") %>% image_resize("2000x")
-img_data_state = img_data %>% image_resize("2000x")
+img_data_state = img_data %>% image_resize("2000x") %>% image_enhance() %>% image_modulate(brightness = 130)
 img_data_state
 # OCR
 recover_img = image_ocr(img_data_state, language = "msa")
@@ -53,6 +53,7 @@ recover_data = str_split(recover_img, "[\n]", simplify = T)  # split at \n
 recover_data = recover_data[grep("kes", recover_data)]  # extract index with kes
 recover_data = str_c(recover_data, collapse = " ")
 recover_data_state = as.numeric(str_split(recover_data, "kes", simplify = T)[1:15])
+recover_data_state
 # Supposed to be 16, but WP KL & WP PUTRAJAYA combined in the image
 state_all = c("Perlis", "Kedah", "Pulau Pinang", "Perak", "Selangor",
               "WP Kuala Lumpur/Putrajaya", "Negeri Sembilan", "Melaka", "Johor", "Pahang",
