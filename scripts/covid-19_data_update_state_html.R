@@ -173,10 +173,14 @@ bantuan = grep("bantuan", str_split(html_text(my_text[loc]), " ", simplify = T))
 # support = as.numeric(word(html_text(my_text[loc]), bantuan - 3))
 support = word(html_text(my_text[loc]), bantuan - 3)
 if(support == "kes") {support = word(html_text(my_text[loc]), bantuan - 4)}
-# if(support == "di") {support = word(html_text(my_text[loc]), bantuan - 2)}  # cannot split?  # 28/10
+# --- cannot split issues:
+# 28/10
 if(support == "di") {support = 25}
 # 29/10 also cannot split, can't even detect sentence by if!
 if (my_date == "2020-10-29") {support = 23}
+# 2/12
+if(support == "mana") {support = 47}
+# ---
 if(support == "tiada" | support == "Tiada") {support = 0}
 if(support == "Kedua-dua") {support = 2}
 if(support == "dan") {support = 1}
