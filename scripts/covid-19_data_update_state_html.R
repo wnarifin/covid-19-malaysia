@@ -225,7 +225,9 @@ data_temp = as.data.frame(data_temp)
 data_temp = rbind(data_temp, data_all); tail(data_temp)
 data_temp = as.data.frame(data_temp)
 # write to xls, change to your file name
-write.xlsx2(data_temp, "covid-19_my_full.xls", sheet = "main", showNA = F, row.names = F)
+if (sum(sapply(c(new_cases, new_deaths, recover, icu, support), is.na)) == 0) {
+  write.xlsx2(data_temp, "covid-19_my_full.xls", sheet = "main", showNA = F, row.names = F)
+}
 
 # === state ===
 
