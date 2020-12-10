@@ -7,26 +7,29 @@ library(magick)
 library(magrittr)
 library(stringr)
 
-# Date
-my_date = Sys.Date()
-# my_date = "2020-11-24"  # if you want other date in yyyy-mm-dd format
-my_day = format(as.Date(my_date), "%d")
-my_day_no = as.numeric(my_day)
-my_mo = format(as.Date(my_date), "%m")
-my_mo_no = as.numeric(my_mo)
-# Set URL
-my_mo_list = c("januari", "februari", "mac", "april", "mei", "jun", "julai", "ogos", "september", "oktober", "november", "disember")
-kpk_url = paste0("https://kpkesihatan.com/2020/", my_mo, "/", my_day, "/kenyataan-akhbar-kpk-", my_day_no,
-                 "-", my_mo_list[my_mo_no], "-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/")
+# do not run if part of data_update_state_html script
+# ===
+# # Date
+# my_date = Sys.Date()
+# # my_date = "2020-11-24"  # if you want other date in yyyy-mm-dd format
+# my_day = format(as.Date(my_date), "%d")
+# my_day_no = as.numeric(my_day)
+# my_mo = format(as.Date(my_date), "%m")
+# my_mo_no = as.numeric(my_mo)
+# # Set URL
+# my_mo_list = c("januari", "februari", "mac", "april", "mei", "jun", "julai", "ogos", "september", "oktober", "november", "disember")
+# kpk_url = paste0("https://kpkesihatan.com/2020/", my_mo, "/", my_day, "/kenyataan-akhbar-kpk-", my_day_no,
+#                  "-", my_mo_list[my_mo_no], "-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/")
+# 
+# # Get the page
+# kpk_page = read_html(kpk_url)
+# str(kpk_page)  # make sure HTML page is loaded
 
-# Get the page
-kpk_page = read_html(kpk_url)
-str(kpk_page)  # make sure HTML page is loaded
-
-# Get image for daily number recovered
-img_node = html_nodes(kpk_page, "img")
-img_loc = grep("discaj", img_node, ignore.case = T)  # get node with discaj
-img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
+# # Get image for daily number recovered
+# img_node = html_nodes(kpk_page, "img")
+# img_loc = grep("discaj", img_node, ignore.case = T)  # get node with discaj
+# img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
+# ===
 
 # Read image, for all states
 img_data = image_read(img_link)

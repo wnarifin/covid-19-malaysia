@@ -35,7 +35,9 @@ kpk_url = paste0("https://kpkesihatan.com/2020/", my_mo, "/", my_day, "/kenyataa
 # date: 2020-07-26
 # kpk_url1 = "https://kpkesihatan.com/2020/07/26/kenyataan-akhbar-kementerian-kesihatan-malaysia-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/"
 # date: 2020-11-19
-kpk_url1 = "https://kpkesihatan.com/2020/11/19/kenyataan-akhbar-kpk-19-november-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/"
+# kpk_url1 = "https://kpkesihatan.com/2020/11/19/kenyataan-akhbar-kpk-19-november-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/"
+# date: 2020-12-10, funny the date is 10-dis but url is 9-dis
+kpk_url1 = "https://kpkesihatan.com/2020/12/10/kenyataan-akhbar-kpk-9-disember-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia-2/"
 
 # page
 # slow internet:
@@ -54,6 +56,7 @@ str(kpk_page)  # make sure html page is loaded, not error
 # save image recover for record purpose
 img_node = html_nodes(kpk_page, "img")
 img_loc = grep("discaj", img_node, ignore.case = T)  # get node with discaj
+if (length(img_loc) == 0) {img_loc = grep("sembuh", img_node, ignore.case = T)}  # get node with discaj
 img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
 img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
 download.file(img_link, destfile = paste0("recover_data_state/img/", my_date, ".", img_ext))
