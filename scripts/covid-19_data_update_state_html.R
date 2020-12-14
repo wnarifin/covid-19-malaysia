@@ -57,6 +57,7 @@ str(kpk_page)  # make sure html page is loaded, not error
 img_node = html_nodes(kpk_page, "img")
 img_loc = grep("discaj", img_node, ignore.case = T)  # get node with discaj
 if (length(img_loc) == 0) {img_loc = grep("sembuh", img_node, ignore.case = T)}  # get node with discaj
+if (length(img_loc) == 0) {img_loc = grep("picture1", img_node, ignore.case = T)}  # 2020-12-14
 img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
 img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
 download.file(img_link, destfile = paste0("recover_data_state/img/", my_date, ".", img_ext))
