@@ -150,6 +150,7 @@ if (length(recover) > 1) {
 new_cases = my_table[17, 2]  # more reliable from table
 
 loc = grep("dirawat di Unit Rawatan Rapi", html_text(my_text), ignore.case = T)
+if(length(loc) == 0) {loc = grep("dirawat di.*Unit Rawatan Rapi", html_text(my_text), ignore.case = T)}
 # Method 1:
 # urr = html_nodes(my_text[loc], "strong")[grep("kes positif", html_nodes(my_text[loc], "strong"))] # not working, inconsistent <strong> placement
 # urr = html_nodes(my_text[loc], "strong")[1]
@@ -185,6 +186,8 @@ if(support == "di") {support = 25}
 if (my_date == "2020-10-29") {support = 23}
 # 2/12
 if(support == "mana") {support = 47}
+# 19/12, "(ICU), di" cannot be detected
+if(my_date == "2020-12-19") {support = 56}
 # ---
 if(support == "tiada" | support == "Tiada") {support = 0}
 if(support == "Kedua-dua") {support = 2}
