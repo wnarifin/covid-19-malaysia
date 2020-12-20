@@ -188,6 +188,8 @@ if (my_date == "2020-10-29") {support = 23}
 if(support == "mana") {support = 47}
 # 19/12, "(ICU), di" cannot be detected
 if(my_date == "2020-12-19") {support = 56}
+# 20/12, "(ICU), di" cannot be detected
+if(my_date == "2020-12-20") {support = 57}
 # ---
 if(support == "tiada" | support == "Tiada") {support = 0}
 if(support == "Kedua-dua") {support = 2}
