@@ -56,7 +56,10 @@ recover_data = str_split(recover_img, "[\n]", simplify = T)  # split at \n
 recover_data = recover_data[grep("kes", recover_data)]  # extract index with kes
 recover_data = str_c(recover_data, collapse = " ")
 recover_data_state = as.numeric(str_split(recover_data, "kes", simplify = T)[1:15])
-recover_data_state
+if (my_date == "2020-12-21") {
+  recover_data = recover_data %>% str_remove_all("kes") %>% str_remove_all(",") %>% str_remove_all("[|]")
+  recover_data_state = na.omit(as.numeric(str_split(recover_data, " ", simplify = T)))
+}
 # Supposed to be 16, but WP KL & WP PUTRAJAYA combined in the image
 state_all = c("Perlis", "Kedah", "Pulau Pinang", "Perak", "Selangor",
               "WP Kuala Lumpur/Putrajaya", "Negeri Sembilan", "Melaka", "Johor", "Pahang",
