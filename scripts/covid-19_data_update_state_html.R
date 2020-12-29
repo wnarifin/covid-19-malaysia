@@ -60,6 +60,7 @@ if (length(img_loc) == 0) {img_loc = grep("sembuh", img_node, ignore.case = T)} 
 if (length(img_loc) == 0) {img_loc = grep("picture1", img_node, ignore.case = T)}  # 2020-12-14
 if (length(img_loc) == 0) {img_loc = grep("whatsapp", img_node, ignore.case = T)}  # 2020-12-17
 if (length(img_loc) == 0) {img_loc = grep("3.png", img_node, ignore.case = T)}  # 2020-12-25? nondescriptive name
+if (length(img_loc) == 0) {img_loc = grep("29-dis-3", img_node, ignore.case = T)}  # 2020-12-29? nondescriptive name
 img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
 img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
 download.file(img_link, destfile = paste0("recover_data_state/img/", my_date, ".", img_ext))

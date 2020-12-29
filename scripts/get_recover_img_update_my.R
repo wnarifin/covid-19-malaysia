@@ -48,7 +48,7 @@ data_recover_kelantan
 
 # Read data for all states, more difficult
 # img_data_state = img_data %>% image_scale("794x446") %>% image_resize("2000x")
-img_data_state = img_data %>% image_resize("2000x") %>% image_enhance() %>% image_modulate(brightness = 130)
+img_data_state = img_data %>% image_resize("2000x") %>% image_enhance() %>% image_modulate(brightness = 140)
 img_data_state
 # OCR
 recover_img = image_ocr(img_data_state, language = "msa")
