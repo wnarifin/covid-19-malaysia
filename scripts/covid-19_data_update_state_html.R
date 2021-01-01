@@ -18,8 +18,13 @@ my_day_no = as.numeric(my_day)
 my_mo = format(as.Date(my_date), "%m")
 my_mo_no = as.numeric(my_mo)
 my_mo_list = c("januari", "februari", "mac", "april", "mei", "jun", "julai", "ogos", "september", "oktober", "november", "disember")
-kpk_url = paste0("https://kpkesihatan.com/2020/", my_mo, "/", my_day, "/kenyataan-akhbar-kpk-", my_day_no,
-"-", my_mo_list[my_mo_no], "-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/")
+# === 2021 ===
+kpk_url = paste0("https://kpkesihatan.com/2021/", my_mo, "/", my_day, "/kenyataan-akhbar-kpk-", my_day_no,
+"-", my_mo_list[my_mo_no], "-2021-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/")
+# uncomment this line for 2020
+# kpk_url = paste0("https://kpkesihatan.com/2020/", my_mo, "/", my_day, "/kenyataan-akhbar-kpk-", my_day_no,
+# "-", my_mo_list[my_mo_no], "-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/")
+# ===
 # kpk_url1 = paste0("https://kpkesihatan.com/2020/", my_mo, "/", my_day, "/kenyataan-akhbar-", my_day_no,
 #                  "-", my_mo_list[my_mo_no], "-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/")
 # date: 2020-04-16, no -kpk
