@@ -197,8 +197,9 @@ if(support == "mana") {support = 47}
 if(my_date == "2020-12-19") {support = 56}
 # 20/12, "(ICU), di" cannot be detected
 if(my_date == "2020-12-20") {support = 57}
-# 5/1, "cannot separate text & number"
+# 5/1, 9/1 "cannot separate text & number"
 if(my_date == "2021-01-05") {support = 52}
+if(my_date == "2021-01-09") {support = 82}
 # ---
 if(support == "tiada" | support == "Tiada") {support = 0}
 if(support == "Kedua-dua") {support = 2}
