@@ -185,6 +185,7 @@ loc = grep("memerlukan bantuan pernafasan", my_text, ignore.case = T)[1]
 bantuan = grep("bantuan", str_split(html_text(my_text[loc]), " ", simplify = T))
 # support = as.numeric(word(html_text(my_text[loc]), bantuan - 3))
 support = word(html_text(my_text[loc]), bantuan - 3)
+# str_extract(str_split(html_text(my_text[loc]), " ", simplify = T), "\\d+")  # will implement str_extract here in code revision
 if(support == "kes") {support = word(html_text(my_text[loc]), bantuan - 4)}
 # --- cannot split issues:
 # 28/10
