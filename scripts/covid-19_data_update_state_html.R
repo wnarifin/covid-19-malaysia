@@ -211,8 +211,26 @@ if(is.na(support) == T) {
   support = as.numeric(str_remove_all(gsub("[()]", "", support), ","))}  # sometimes word split doesn't work
 if (is.na(loc)) {support = 0}
 
-# seach for <li> for death count
+# search for <li>
 my_li = html_nodes(kpk_page, "li")
+# new structure starting from 20/1/2021
+# search for <li> for recover, icu, support
+if (my_date > "2021-01-19") {
+  # recover
+  loc = grep("Kes sembuh", my_li, ignore.case = T)
+  recover = str_remove_all(gsub("[()]", "", html_text(my_li[loc])), ",")
+  recover = as.numeric(str_extract(recover, "\\d+"))
+  # icu
+  loc = grep("ICU", my_li, ignore.case = T)
+  icu = str_remove_all(gsub("[()]", "", html_text(my_li[loc])), ",")
+  icu = as.numeric(str_extract(icu, "\\d+"))
+  # support
+  loc = grep("pernafasan", my_li, ignore.case = T)
+  support = str_remove_all(gsub("[()]", "", html_text(my_li[loc])), ",")
+  support = as.numeric(str_extract(support, "\\d+"))
+}
+
+# search for <li> for death count
 loc = grep("Kes kematian", my_li)
 new_deaths = length(loc)
 # cannot use this method starting from 8/10
@@ -378,3 +396,5 @@ data_temp = rbind(data_temp, data_import)
 data_temp = as.data.frame(data_temp)
 # write to xls, change to your file name
 write.xlsx2(data_temp, "covid-19_my_import.xls", sheet = "main", showNA = F, row.names = F)
+
+data_state[order(data_state$total_cases),]
