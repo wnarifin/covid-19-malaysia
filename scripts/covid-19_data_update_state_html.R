@@ -59,20 +59,22 @@ if (class(kpk_page) == "try-error") {kpk_page = try(read_html(kpk_url1), T)} els
 str(kpk_page)  # make sure html page is loaded, not error
 
 # save image recover for record purpose
-img_node = html_nodes(kpk_page, "img")
-img_loc = grep("discaj", img_node, ignore.case = T)  # get node with discaj
-if (length(img_loc) == 0) {img_loc = grep("sembuh", img_node, ignore.case = T)}  # get node with discaj
-if (length(img_loc) == 0) {img_loc = grep("picture1", img_node, ignore.case = T)}  # 2020-12-14
-if (length(img_loc) == 0) {img_loc = grep("whatsapp", img_node, ignore.case = T)}  # 2020-12-17
-if (length(img_loc) == 0) {img_loc = grep("3.png", img_node, ignore.case = T)}  # 2020-12-25? nondescriptive name
-if (length(img_loc) == 0) {img_loc = grep("29-dis-3", img_node, ignore.case = T)}  # 2020-12-29? nondescriptive name
-img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
-img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
-download.file(img_link, destfile = paste0("recover_data_state/img/", my_date, ".", img_ext))
-# system(paste0("wget -c ", img_link, " -O recover_data_state/", my_date, ".", img_ext))
-setwd("recover_data_state/recover_R/")
-source("get_recover_img_update_my.R")
-setwd("../../")
+# it seems KKM no longer update recovery by states since 2020-12-30
+# so code block below is commented out
+# img_node = html_nodes(kpk_page, "img")
+# img_loc = grep("discaj", img_node, ignore.case = T)  # get node with discaj
+# if (length(img_loc) == 0) {img_loc = grep("sembuh", img_node, ignore.case = T)}  # get node with discaj
+# if (length(img_loc) == 0) {img_loc = grep("picture1", img_node, ignore.case = T)}  # 2020-12-14
+# if (length(img_loc) == 0) {img_loc = grep("whatsapp", img_node, ignore.case = T)}  # 2020-12-17
+# if (length(img_loc) == 0) {img_loc = grep("3.png", img_node, ignore.case = T)}  # 2020-12-25? nondescriptive name
+# if (length(img_loc) == 0) {img_loc = grep("29-dis-3", img_node, ignore.case = T)}  # 2020-12-29? nondescriptive name
+# img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
+# img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
+# download.file(img_link, destfile = paste0("recover_data_state/img/", my_date, ".", img_ext))
+# # system(paste0("wget -c ", img_link, " -O recover_data_state/", my_date, ".", img_ext))
+# setwd("recover_data_state/recover_R/")
+# source("get_recover_img_update_my.R")
+# setwd("../../")
 
 # table
 # table, 1-malay, 2-english
@@ -396,5 +398,3 @@ data_temp = rbind(data_temp, data_import)
 data_temp = as.data.frame(data_temp)
 # write to xls, change to your file name
 write.xlsx2(data_temp, "covid-19_my_import.xls", sheet = "main", showNA = F, row.names = F)
-
-data_state[order(data_state$total_cases),]
