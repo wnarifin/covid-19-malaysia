@@ -320,6 +320,7 @@ for (i in 1:new_deaths) {
 }; negeri_text
 if (my_date == "2020-11-09") {negeri_text[5] = "Labuan"}  # weird space problem
 negeri_text
+# ---
 negeri_cnt = matrix(rep(0, length(negeri)), nrow = new_deaths, ncol = length(negeri))
 for (i in 1:new_deaths) {
   negeri_cnt[i,] = as.numeric(str_count(negeri_text[i], negeri) > 0)
