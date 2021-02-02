@@ -301,6 +301,12 @@ plot1 = ggplot(data_plot) +
   annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "RMCO1", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "RMCO2", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "Sabah\nElection", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "Free\nTravel", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "MCO2", angle = 90) +
   labs(x = "Date", y = "New cases", title = paste0("New cases by ", format(sel_date, "%d %B %Y"))) +
   #theme(axis.text.x = element_text(angle = 45, hjust = 1))# +
   theme_light()
@@ -325,6 +331,12 @@ plot2 = ggplot(data_plot) +
   annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "RMCO1", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "RMCO2", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "Sabah\nElection", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "Free\nTravel", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "MCO2", angle = 90) +
   labs(x = "Date", y = "Cumulative cases", title = paste0("Total cases by ", format(sel_date, "%d %B %Y"))) +
   theme_light()
 plot2
@@ -423,6 +435,12 @@ plot3 = ggplot(data_plot1) +
   annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "RMCO1", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "RMCO2", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "Sabah\nElection", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "Free\nTravel", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "MCO2", angle = 90) +
   labs(x = "Date", y = "New deaths", title = paste0("New deaths by ", format(sel_date, "%d %B %Y"))) +
   theme_light()
 plot3
@@ -447,6 +465,12 @@ plot4 = ggplot(data_plot1) +
   annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "RMCO1", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "RMCO2", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "Sabah\nElection", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "Free\nTravel", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "MCO2", angle = 90) +
   labs(x = "Date", y = "Cumulative deaths", title = paste0("Total deaths by ", format(sel_date, "%d %B %Y"))) +
   theme_light()
 plot4
