@@ -12,7 +12,7 @@ library(magrittr)
 library(stringr)
 
 my_date = Sys.Date()
-# my_date = "2021-01-28"  # for specific date
+# my_date = "2021-02-15"  # for specific date
 my_day = format(as.Date(my_date), "%d")
 my_day_no = as.numeric(my_day)
 my_mo = format(as.Date(my_date), "%m")
@@ -320,6 +320,7 @@ for (i in 1:new_deaths) {
 }; negeri_text
 if (my_date == "2020-11-09") {negeri_text[5] = "Labuan"}  # weird space problem
 negeri_text
+
 # ---
 negeri_cnt = matrix(rep(0, length(negeri)), nrow = new_deaths, ncol = length(negeri))
 for (i in 1:new_deaths) {

@@ -99,7 +99,7 @@ covid_my_state$date = as.Date(covid_my_state$date)
 # New data, 2020-03-30 onwards
 date_start = as.Date("2020-03-30")
 date_end = Sys.Date()  # change if required
-# date_end = as.Date("2021-01-28")  # change if required, max date needed
+# date_end = as.Date("2021-02-08")  # change if required, max date needed
 date_range = date_start:date_end
 state_append = covid_my_state$state[1:16]
 for (i in 1:length(date_range)) {
@@ -108,7 +108,8 @@ for (i in 1:length(date_range)) {
   colnames(covid_my_state_append) = c("new_cases", "total_cases", "new_deaths")
   covid_my_state_append = cbind(date = date_append, state = state_append, covid_my_state_append, total_deaths = NA)
   covid_my_state = rbind(covid_my_state, covid_my_state_append)
-}
+}  # it will append from 2020-03-30 to today every time, not a very effective algorithm
+# to make this better, so will only append the latest date
 
 # generate total
 covid_my_state = covid_my_state %>% group_by(state) %>% mutate(total_deaths = cumsum(new_deaths))
@@ -124,4 +125,4 @@ test2 = read.csv("covid-19_my_state.csv")
 test2$date = as.Date(test2$date)
 str(test2)
 colnames(test2)
-test2$date
+tail(test2$date, 16*4)
