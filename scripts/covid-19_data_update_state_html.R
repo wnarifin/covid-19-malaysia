@@ -224,7 +224,8 @@ if (my_date > "2021-01-19") {
   recover = as.numeric(str_extract(recover, "\\d+"))
   # icu
   loc = grep("ICU", my_li, ignore.case = T)
-  icu = str_remove_all(gsub("[()]", "", html_text(my_li[loc])), ",")
+  # icu = str_remove_all(gsub("[()]", "", html_text(my_li[loc])), ",")
+  icu = str_remove_all(gsub("[()]", "", html_text(my_li[loc[1]])), ",")
   icu = as.numeric(str_extract(icu, "\\d+"))
   # support
   loc = grep("pernafasan", my_li, ignore.case = T)
