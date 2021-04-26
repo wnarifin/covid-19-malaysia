@@ -12,7 +12,7 @@ library(magrittr)
 library(stringr)
 
 my_date = Sys.Date()
-# my_date = "2021-04-22"  # for specific date
+# my_date = "2021-04-25"  # for specific date
 my_day = format(as.Date(my_date), "%d")
 my_day_no = as.numeric(my_day)
 my_mo = format(as.Date(my_date), "%m")
