@@ -313,7 +313,8 @@ for (i in 1:new_deaths) {
   negeri_text = str_replace_all(negeri_text, "KKM di Sabah", "-")
 }; negeri_text
 if (my_date > "2020-10-13") {
-  negeri_text = my_table_deaths[,"Negeri"]
+  #negeri_text = my_table_deaths[,"Negeri"]  # hmm... now capital case huh? @ 30/5/2021
+  negeri_text = my_table_deaths[,grep("negeri", my_table_deaths, ignore.case = T)]
 }; negeri_text
 for (i in 1:new_deaths) {
   negeri_text = str_replace_all(negeri_text, "WP Labuan", "Labuan")
