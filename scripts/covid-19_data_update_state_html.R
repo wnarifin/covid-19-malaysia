@@ -259,6 +259,8 @@ data_all = data.frame(date=my_date, location="Malaysia", new_cases=new_cases, ne
                       icu=icu, support=support)
 data_all
 data_all$date = as.Date(data_all$date)
+data_all = data_all[1,]  # make sure if there is rep row, only 1st row
+data_all
 # this one for all is very good, 100% accuracy
 
 # read prexisting xls first, the append new row to existing dataframe
@@ -267,7 +269,7 @@ data_temp = as.data.frame(data_temp)
 data_temp = rbind(data_temp, data_all); tail(data_temp)
 data_temp = as.data.frame(data_temp)
 # write to xls, change to your file name
-if (sum(sapply(c(new_cases, new_deaths, recover, icu, support), is.na)) == 0) {
+if (sum(sapply(c(data_all$new_cases, data_all$new_deaths, data_all$recover, data_all$icu, data_all$support), is.na)) == 0) {
   write.xlsx2(data_temp, "covid-19_my_full.xls", sheet = "main", showNA = F, row.names = F)
 }
 
