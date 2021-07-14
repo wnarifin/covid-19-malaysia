@@ -12,7 +12,7 @@ library(magrittr)
 library(stringr)
 
 my_date = Sys.Date()
-# my_date = "2021-05-31"  # for specific date
+# my_date = "2021-07-13"  # for specific date
 my_day = format(as.Date(my_date), "%d")
 my_day_no = as.numeric(my_day)
 my_mo = format(as.Date(my_date), "%m")
@@ -253,6 +253,13 @@ if (my_date > "2020-10-07") {
   new_deaths = nrow(my_table_deaths)
 }
 
+if (my_date > "2021-07-13") {
+  # death
+  loc = grep("Kes kematian", my_li, ignore.case = T)
+  new_deaths = str_remove_all(gsub("[()]", "", html_text(my_li[loc])), ",")
+  new_deaths = as.numeric(str_extract(new_deaths, "\\d+"))
+}
+
 # data frame
 data_all = data.frame(date=my_date, location="Malaysia", new_cases=new_cases, new_deaths=new_deaths, 
                       total_cases=NA, total_deaths=NA, recover=recover, total_recover=NA, 
@@ -278,10 +285,16 @@ if (sum(sapply(c(data_all$new_cases, data_all$new_deaths, data_all$recover, data
 # get from <li> earlier
 # deaths by state [trial]
 negeri = c("Perlis", "Kedah", "Pulau Pinang", "Perak", "Selangor", "Negeri Sembilan", "Melaka", "Johor", "Pahang", "Terengganu", "Kelantan", "Sabah", "Sarawak", "Kuala Lumpur", "Putrajaya", "Labuan")
+
+# death reported only in text from the start
 negeri_text = html_text(my_li[loc])
+
+# death reported in table format by hospital starting from 2020-10-07
 if (my_date > "2020-10-07") {
   negeri_text = my_table_deaths[,"Hospital"]
 }
+
+# need to decide which state by the name of hospital for both methods above
 for (i in 1:new_deaths) {
   # replacements
   # take into account sometime they mention name with state
@@ -314,16 +327,59 @@ for (i in 1:new_deaths) {
   negeri_text = str_replace_all(negeri_text, "kluster hospital pakar Muar, Johor", "-")
   negeri_text = str_replace_all(negeri_text, "KKM di Sabah", "-")
 }; negeri_text
+
+# death reported in table format by state starting 2020-10-13
+# no longer need to decide state by hospital name
 if (my_date > "2020-10-13") {
   #negeri_text = my_table_deaths[,"Negeri"]  # hmm... now capital case huh? @ 30/5/2021
   negeri_text = my_table_deaths[,grep("negeri", my_table_deaths, ignore.case = T)]
 }; negeri_text
+
+# correct naming for abv methods
 for (i in 1:new_deaths) {
   negeri_text = str_replace_all(negeri_text, "WP Labuan", "Labuan")
   negeri_text = str_replace_all(negeri_text, "Wilayah Persekutuan Labuan", "Labuan") # doesn't work, another weird space
 }; negeri_text
 if (my_date == "2020-11-09") {negeri_text[5] = "Labuan"}  # weird space problem
 negeri_text
+
+# death reported in table format in image format??? by state starting 2020-07-14
+# cumulative sum by state, need to OCR
+# img_link by date
+# img_link = "https://kpkesihatan.files.wordpress.com/2021/07/lampiran-2.png"; my_date = "2021-07-14"
+if (my_date >= "2021-07-14") {
+  # download & save img
+  img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
+  download.file(img_link, destfile = paste0("death_data_state/img/", my_date, ".", img_ext))
+  
+  # Read img
+  img_data = image_read(paste0("death_data_state/img/", my_date, ".", img_ext))
+  
+  # Read table from img
+  # img 998x1175 -> scale 1000x1000 to standardize, who knows tomorrow it will be 4k x 4k
+  # crop table, start 15,135 : 975,960
+  img_data_death = img_data %>% image_scale("1000x1000!") %>% image_crop("960x825+15+135") %>% 
+    image_convert(colorspace = "gray")
+  img_data_death
+  img_data_death_negeri = img_data_death %>% image_crop("135x662+10+105"); img_data_death_negeri
+  img_data_death_negeri_count = img_data_death %>% image_crop("70x662+150+105"); img_data_death_negeri_count
+  
+  # OCR
+  data_death_negeri_name = image_ocr(img_data_death_negeri, language = "msa") %>% str_split("[\n]", simplify = T)
+  negeri_name_drop = which(data_death_negeri_name == "Lumpur" | data_death_negeri_name == "Negeri" | data_death_negeri_name == "Pulau")
+  data_death_negeri_name = data_death_negeri_name[-negeri_name_drop]  # drop redundant names
+  data_death_negeri_name = data_death_negeri_name[-length(data_death_negeri_name)]  # rmv last obs
+  data_death_negeri_name = str_replace_all(data_death_negeri_name, "WP Labuan", "Labuan")
+  data_death_negeri_name = str_replace_all(data_death_negeri_name, "WP Kuala", "Kuala Lumpur")
+  data_death_negeri_name = str_replace_all(data_death_negeri_name, "Sembilan", "Negeri Sembilan")
+  data_death_negeri_name = str_replace_all(data_death_negeri_name, "Pinang", "Pulau Pinang")
+  
+  data_death_negeri_count = image_ocr(img_data_death_negeri_count, language = "msa") %>% str_split("[\n]", simplify = T) %>% as.numeric()
+  data_death_negeri_count = data_death_negeri_count[-length(data_death_negeri_count)]
+  
+  data_death_negeri = data.frame(negeri = data_death_negeri_name, kematian = data_death_negeri_count)
+}
+data_death_negeri
 
 # ---
 negeri_cnt = matrix(rep(0, length(negeri)), nrow = new_deaths, ncol = length(negeri))
@@ -362,7 +418,30 @@ for (i in 1:length(negeri)) {
   data_state[i,] = my_table[loc_negeri[i],]
 }
 data_state
+
+# combine with data from OCR
+data_death_negeri
+# order according to negeri
+loc_negeri1 = rep(0, length(negeri))
+if (nrow(data_death_negeri) < length(negeri)) {
+  nege = rep("tiada", length(negeri) - nrow(data_death_negeri))
+  kema = rep(0, length(negeri) - nrow(data_death_negeri))
+  temp_df = data.frame(negeri = nege, kematian = kema)
+  data_death_negeri = rbind(data_death_negeri, temp_df)
+}
+for (i in 1:length(negeri)) {
+  loc_temp = grep(negeri[i], data_death_negeri$negeri, ignore.case = T)
+  if (length(loc_temp) < 1) {loc_negeri1[i] = NA} else {loc_negeri1[i] = loc_temp}
+}
+loc_negeri1
+new_deaths_state1 = data_death_negeri$kematian[loc_negeri1]
+new_deaths_state1[is.na(new_deaths_state1)] = 0
+
+# add death counts
 data_state$new_deaths = c(new_deaths_state, sum(new_deaths_state))
+if (my_date >= "2021-07-14") {
+  data_state$new_deaths = c(new_deaths_state1, sum(new_deaths_state1))
+}
 data_state
 
 # add new sheet to pre-existing xls, change to your file name
