@@ -347,6 +347,8 @@ negeri_text
 # cumulative sum by state, need to OCR
 # img_link by date
 # img_link = "https://kpkesihatan.files.wordpress.com/2021/07/lampiran-2.png"; my_date = "2021-07-14"
+# img_link = "https://kpkesihatan.files.wordpress.com/2021/07/capture1.png"; my_date = "2021-07-15"
+
 if (my_date >= "2021-07-14") {
   # download & save img
   img_ext = str_split(img_link, "[.]", simplify = T); img_ext = img_ext[length(img_ext)]  # get extension
@@ -361,12 +363,17 @@ if (my_date >= "2021-07-14") {
   img_data_death = img_data %>% image_scale("1000x1000!") %>% image_crop("960x825+15+135") %>% 
     image_convert(colorspace = "gray")
   img_data_death
-  img_data_death_negeri = img_data_death %>% image_crop("135x662+10+105"); img_data_death_negeri
-  img_data_death_negeri_count = img_data_death %>% image_crop("70x662+150+105"); img_data_death_negeri_count
+  # "2021-07-14"
+  # img_data_death_negeri = img_data_death %>% image_crop("135x662+10+105"); img_data_death_negeri
+  # img_data_death_negeri_count = img_data_death %>% image_crop("70x662+150+105"); img_data_death_negeri_count
+  # "2021-07-15" the location for crop keeps changing, how to deal with this?
+  img_data_death_negeri = img_data_death %>% image_crop("135x662+10+125"); img_data_death_negeri
+  img_data_death_negeri_count = img_data_death %>% image_crop("70x662+150+125"); img_data_death_negeri_count
   
   # OCR
   data_death_negeri_name = image_ocr(img_data_death_negeri, language = "msa") %>% str_split("[\n]", simplify = T)
-  negeri_name_drop = which(data_death_negeri_name == "Lumpur" | data_death_negeri_name == "Negeri" | data_death_negeri_name == "Pulau")
+  negeri_name_drop = which(data_death_negeri_name == "Lumpur" | data_death_negeri_name == "Negeri" | 
+                             data_death_negeri_name == "Pulau" | data_death_negeri_name == "Jumlah")
   data_death_negeri_name = data_death_negeri_name[-negeri_name_drop]  # drop redundant names
   data_death_negeri_name = data_death_negeri_name[-length(data_death_negeri_name)]  # rmv last obs
   data_death_negeri_name = str_replace_all(data_death_negeri_name, "WP Labuan", "Labuan")
@@ -375,7 +382,7 @@ if (my_date >= "2021-07-14") {
   data_death_negeri_name = str_replace_all(data_death_negeri_name, "Pinang", "Pulau Pinang")
   
   data_death_negeri_count = image_ocr(img_data_death_negeri_count, language = "msa") %>% str_split("[\n]", simplify = T) %>% as.numeric()
-  data_death_negeri_count = data_death_negeri_count[-length(data_death_negeri_count)]
+  data_death_negeri_count = data_death_negeri_count[1:length(data_death_negeri_name)]
   
   data_death_negeri = data.frame(negeri = data_death_negeri_name, kematian = data_death_negeri_count)
 }
