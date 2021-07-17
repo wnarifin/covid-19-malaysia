@@ -43,6 +43,13 @@ kpk_url = paste0("https://kpkesihatan.com/2021/", my_mo, "/", my_day, "/kenyataa
 # kpk_url1 = "https://kpkesihatan.com/2020/11/19/kenyataan-akhbar-kpk-19-november-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/"
 # date: 2020-12-10, funny the date is 10-dis but url is 9-dis
 kpk_url1 = "https://kpkesihatan.com/2020/12/10/kenyataan-akhbar-kpk-9-disember-2020-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia-2/"
+# for img death daily by state
+my_yr = format(as.Date(my_date), "%Y")
+my_date1 = format(as.Date(my_date), "%d%m%Y")
+# img_url = paste0("http://covid-19.moh.gov.my/user/pages/02.terkini/01.", my_yr, "/", 
+#                  my_mo, ".", my_mo, "/situasi-terkini-covid-19-di-malaysia-", my_date1)
+img_url = paste0("http://covid-19.moh.gov.my/terkini/", my_yr, "/",
+                 my_mo, "/situasi-terkini-covid-19-di-malaysia-", my_date1)
 
 # page
 # slow internet:
@@ -351,24 +358,35 @@ negeri_text
 # img_link = "http://covid-19.moh.gov.my/user/pages/02.terkini/01.2021/07.07/situasi-terkini-covid-19-di-malaysia-16072021/ukk-kematian2.jpg"; my_date = as.Date("2021-07-16")
 # grab img link automatically
 # as we can see, the naming is inconsistent, the image also got not title in html tag
-img_node = html_nodes(kpk_page, "img")
-img_loc = grep("lam.", img_node, ignore.case = T)  # get node with lampiran
-if (length(img_loc) == 0) {img_loc = grep("capture", img_node, ignore.case = T)}  # variant on 2021-07-15
+
+# get img html
+img_page = try(read_html(img_url), T)
+# test loaded
+str(img_page)  # make sure html page is loaded, not error
+
+img_node = html_nodes(img_page, "img")
+img_loc = grep("kematian2", img_node, ignore.case = T)
+# for kpk_page
+# img_loc = grep("lam.", img_node, ignore.case = T)  # get node with lampiran
+# if (length(img_loc) == 0) {img_loc = grep("capture", img_node, ignore.case = T)}  # variant on 2021-07-15
 # hopefully the webmaster won't come up with a new variant of filename...
-img_link = html_attr(img_node[img_loc], "data-orig-file")  # get the content of attribute in a tag
+img_link = html_attr(img_node[img_loc], "src")  # get the content of attribute in a tag
+img_link = paste0("http://covid-19.moh.gov.my", img_link)
 # save link and date for later ref, like what dataworld is doing
 # write.csv(data.frame(my_date, img_link), "img_death_link.csv", row.names = F)
 img_link_temp = read.csv("img_death_link.csv"); img_link_temp$my_date = as.Date(img_link_temp$my_date)
 img_link_temp = rbind(img_link_temp, data.frame(my_date, img_link))
 write.csv(img_link_temp, "img_death_link.csv", row.names = F)
 # the image attached in kenyataan akhbar  on 2021-07-16 was from yesterday with different name
-# correct one in text, stated as "Sebanyak 115 kes kematian pada hari ini yang melibatkan 53 kes di Selangor, 24 kes di Wilayah Persekutuan Kuala Lumpur,masing-masing tujuh (7) kes di Johor dan Melaka, lima (5) kes di Pulau Pinang, masing-masing empat (4) kes di Negeri Sembilan dan Kedah,masing-masing tiga (3) kes di Sabah dan Perak, masing-masing dua (2) kes di Kelantan dan Terengganu, serta satu (1) kes di Wilayah Persekutuan Labuan."
+# correct one text
 # this reporting in text is unlikely to be consistent from past history of reporting. also difficult to extract bcs the use of
 # masing-masing word for negeri with same counts
 # to monitor for few more days
 # maybe time to change to http://covid-19.moh.gov.my/terkini/
 # e.g. http://covid-19.moh.gov.my/terkini/2021/07/situasi-terkini-covid-19-di-malaysia-16072021
 # more consistent naming, e.g. http://covid-19.moh.gov.my/user/pages/02.terkini/01.2021/07.07/situasi-terkini-covid-19-di-malaysia-16072021/ukk-kematian2.jpg
+# or switch to info-graphic picture on http://covid-19.moh.gov.my, with per state death count
+# but the infographic is of low res, keep changing design! Julai & June have diff design/theme
 
 if (my_date >= "2021-07-14") {
   # download & save img
@@ -381,7 +399,7 @@ if (my_date >= "2021-07-14") {
   # Read table from img
   # img 998x1175 -> scale 1000x1000 to standardize, who knows tomorrow it will be 4k x 4k
   # crop table, start 15,135 : 975,960
-  img_data_death = img_data %>% image_scale("1000x1000!") %>% image_crop("960x825+15+175") %>% 
+  img_data_death = img_data %>% image_scale("1000x1500!") %>% image_crop("960x825+45+175") %>% 
     image_convert(colorspace = "gray")
   img_data_death
   # "2021-07-14"
@@ -389,12 +407,13 @@ if (my_date >= "2021-07-14") {
   # img_data_death_negeri_count = img_data_death %>% image_crop("70x662+150+105"); img_data_death_negeri_count
   # "2021-07-15" the location for crop keeps changing, how to deal with this?
   # > "2021-07-15" the location for crop keeps changing, how to deal with this?
-  img_data_death_negeri = img_data_death %>% image_crop("135x662+10+125"); img_data_death_negeri
-  img_data_death_negeri_count = img_data_death %>% image_crop("70x662+150+125"); img_data_death_negeri_count
+  img_data_death_negeri = img_data_death %>% image_crop("135x662+10+230"); img_data_death_negeri
+  img_data_death_negeri_count = img_data_death %>% image_crop("70x662+150+230"); img_data_death_negeri_count
   # must get this cropping right... esp top part
   
   # OCR
   data_death_negeri_name = image_ocr(img_data_death_negeri, language = "msa") %>% str_split("[\n]", simplify = T)
+  data_death_negeri_name = data_death_negeri_name[-which(data_death_negeri_name == "")]
   negeri_name_drop = which(data_death_negeri_name == "Lumpur" | data_death_negeri_name == "Negeri" | 
                              data_death_negeri_name == "Pulau")
   negeri_name_cutoff = which(data_death_negeri_name == "Jumlah")
