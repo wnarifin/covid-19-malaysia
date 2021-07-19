@@ -375,7 +375,7 @@ img_link = paste0("http://covid-19.moh.gov.my", img_link)
 # save link and date for later ref, like what dataworld is doing
 # write.csv(data.frame(my_date, img_link), "img_death_link.csv", row.names = F)
 img_link_temp = read.csv("img_death_link.csv"); img_link_temp$my_date = as.Date(img_link_temp$my_date)
-img_link_temp = rbind(img_link_temp, data.frame(my_date, img_link))
+img_link_temp = rbind(img_link_temp, data.frame(my_date, img_link)); img_link_temp
 write.csv(img_link_temp, "img_death_link.csv", row.names = F)
 # the image attached in kenyataan akhbar  on 2021-07-16 was from yesterday with different name
 # correct one text
@@ -407,8 +407,8 @@ if (my_date >= "2021-07-14") {
   # img_data_death_negeri_count = img_data_death %>% image_crop("70x662+150+105"); img_data_death_negeri_count
   # "2021-07-15" the location for crop keeps changing, how to deal with this?
   # > "2021-07-15" the location for crop keeps changing, how to deal with this?
-  img_data_death_negeri = img_data_death %>% image_crop("150x700+20+230"); img_data_death_negeri
-  img_data_death_negeri_count = img_data_death %>% image_crop("50x700+175+230"); img_data_death_negeri_count
+  img_data_death_negeri = img_data_death %>% image_crop("150x700+15+230"); img_data_death_negeri
+  img_data_death_negeri_count = img_data_death %>% image_crop("60x700+160+230"); img_data_death_negeri_count
   # must get this cropping right... esp top part
   
   # OCR
@@ -428,8 +428,8 @@ if (my_date >= "2021-07-14") {
   data_death_negeri_name = str_replace_all(data_death_negeri_name, "Pinan.", "Pulau Pinang")
   data_death_negeri_name
   
-  data_death_negeri_count = image_ocr(img_data_death_negeri_count, language = "msa") %>% 
-    str_split("[\n]", simplify = T) %>% as.numeric()
+  data_death_negeri_count = image_ocr(img_data_death_negeri_count, "msa") %>% 
+    str_split("[\n]", simplify = T) %>% as.numeric() %>% na.omit()
   data_death_negeri_count = data_death_negeri_count[1:length(data_death_negeri_name)]
   data_death_negeri_count
   
