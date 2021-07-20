@@ -12,7 +12,7 @@ library(magrittr)
 library(stringr)
 
 my_date = Sys.Date()
-# my_date = "2021-07-13"  # for specific date
+# my_date = "2021-07-20"  # for specific date
 my_day = format(as.Date(my_date), "%d")
 my_day_no = as.numeric(my_day)
 my_mo = format(as.Date(my_date), "%m")
@@ -407,8 +407,8 @@ if (my_date >= "2021-07-14") {
   # img_data_death_negeri_count = img_data_death %>% image_crop("70x662+150+105"); img_data_death_negeri_count
   # "2021-07-15" the location for crop keeps changing, how to deal with this?
   # > "2021-07-15" the location for crop keeps changing, how to deal with this?
-  img_data_death_negeri = img_data_death %>% image_crop("150x700+15+230"); img_data_death_negeri
-  img_data_death_negeri_count = img_data_death %>% image_crop("60x700+160+230"); img_data_death_negeri_count
+  img_data_death_negeri = img_data_death %>% image_crop("150x700+15+190"); img_data_death_negeri
+  img_data_death_negeri_count = img_data_death %>% image_crop("60x700+160+190"); img_data_death_negeri_count
   # must get this cropping right... esp top part
   
   # OCR
