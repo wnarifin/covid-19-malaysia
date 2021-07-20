@@ -98,7 +98,8 @@ covid_my_state$date = as.Date(covid_my_state$date)
 
 # New data, 2020-03-30 onwards
 date_start = as.Date("2020-03-30")
-date_end = Sys.Date()  # change if required
+# date_end = Sys.Date()  # change if required
+date_end = max(covid_my_full$date)
 # date_end = as.Date("2021-07-14")  # change if required, max date needed
 date_range = date_start:date_end
 state_append = covid_my_state$state[1:16]
