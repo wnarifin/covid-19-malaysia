@@ -48,6 +48,7 @@ my_yr = format(as.Date(my_date), "%Y")
 my_date1 = format(as.Date(my_date), "%d%m%Y")
 # img_url = paste0("http://covid-19.moh.gov.my/user/pages/02.terkini/01.", my_yr, "/", 
 #                  my_mo, ".", my_mo, "/situasi-terkini-covid-19-di-malaysia-", my_date1)
+# it was http until 20/7/2021
 img_url = paste0("http://covid-19.moh.gov.my/terkini/", my_yr, "/",
                  my_mo, "/situasi-terkini-covid-19-di-malaysia-", my_date1)
 
@@ -360,6 +361,15 @@ negeri_text
 # as we can see, the naming is inconsistent, the image also got not title in html tag
 
 # get img html
+url_this <- "http://httpbin.org/user-agent"
+httr::GET(url_this)
+# httr::GET("http://httpbin.org/user-agent", httr::user_agent("Mozilla/5.0"))
+# httr::with_config(httr::user_agent("Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0; https://covid-19.moh.gov.my"))
+# httr::with_config(httr::user_agent("Mozilla/5.0"))
+# httr::with_config(httr::verbose(), {httr::user_agent("Mozilla/5.0")})
+
+# seems the site is blocking webscraping
+# read_html(img_url, user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0")
 img_page = try(read_html(img_url), T)
 # test loaded
 str(img_page)  # make sure html page is loaded, not error
@@ -372,6 +382,8 @@ img_loc = grep("kematian2", img_node, ignore.case = T)
 # hopefully the webmaster won't come up with a new variant of filename...
 img_link = html_attr(img_node[img_loc], "src")  # get the content of attribute in a tag
 img_link = paste0("http://covid-19.moh.gov.my", img_link)
+
+# img_link = "https://covid-19.moh.gov.my/user/pages/02.terkini/01.2021/07.07/situasi-terkini-covid-19-di-malaysia-21072021/ukk-kematian2.jpg"
 # save link and date for later ref, like what dataworld is doing
 # write.csv(data.frame(my_date, img_link), "img_death_link.csv", row.names = F)
 img_link_temp = read.csv("img_death_link.csv"); img_link_temp$my_date = as.Date(img_link_temp$my_date)
@@ -408,7 +420,7 @@ if (my_date >= "2021-07-14") {
   # "2021-07-15" the location for crop keeps changing, how to deal with this?
   # > "2021-07-15" the location for crop keeps changing, how to deal with this?
   img_data_death_negeri = img_data_death %>% image_crop("150x700+15+190"); img_data_death_negeri
-  img_data_death_negeri_count = img_data_death %>% image_crop("60x700+160+190"); img_data_death_negeri_count
+  img_data_death_negeri_count = img_data_death %>% image_crop("80x700+160+190"); img_data_death_negeri_count
   # must get this cropping right... esp top part
   
   # OCR
@@ -425,7 +437,7 @@ if (my_date >= "2021-07-14") {
   data_death_negeri_name = str_replace_all(data_death_negeri_name, "Negeri Sembilan", "Sembilan")  # sometimes the format only one line
   data_death_negeri_name = str_replace_all(data_death_negeri_name, "Sembilan", "Negeri Sembilan")
   data_death_negeri_name = str_replace_all(data_death_negeri_name, "Pulau Pinang", "Pinang")  # sometimes the format only one line
-  data_death_negeri_name = str_replace_all(data_death_negeri_name, "Pinan.", "Pulau Pinang")
+  data_death_negeri_name = str_replace_all(data_death_negeri_name, "Pina.", "Pulau Pinang")
   data_death_negeri_name
   
   data_death_negeri_count = image_ocr(img_data_death_negeri_count, "msa") %>% 
