@@ -420,7 +420,7 @@ if (my_date >= "2021-07-14") {
   # "2021-07-15" the location for crop keeps changing, how to deal with this?
   # > "2021-07-15" the location for crop keeps changing, how to deal with this?
   img_data_death_negeri = img_data_death %>% image_crop("165x850+15+190"); img_data_death_negeri
-  img_data_death_negeri_count = img_data_death %>% image_crop("80x850+200+190"); img_data_death_negeri_count
+  img_data_death_negeri_count = img_data_death %>% image_crop("70x850+200+190"); img_data_death_negeri_count
   # must get this cropping right... esp top part
   
   # OCR
