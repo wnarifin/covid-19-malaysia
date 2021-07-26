@@ -7,4 +7,5 @@ This repository hosts the dashboard Covid-19 Situation in Malaysia. It also cont
 
 ** Updates **
 - As of 23 July 2021, MOH, MOSTI & CITF started sharing data in github at https://github.com/MoH-Malaysia/covid19-public. So, some of the scripts with web scraping code are no longer useful.
-- In addition, there will be no longer data updates in this repository. The dashboard will be updated in later date to utilize the new data source.
+- Data integrated with the data from MOH, new workflow updated in the script. Original script renamed to "scrape_version"
+- Recovery data and imported cases are still scraped as usual.
