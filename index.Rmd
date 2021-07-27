@@ -16,6 +16,7 @@ library(flexdashboard)
 library(ggplot2)
 library(plotly)
 library(broom)
+library(scales)
 
 # --- Malaysia ---
 # covid_my_full = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_full.csv")
@@ -30,6 +31,7 @@ data_plots = covid_my_state
 
 sel_location = "Malaysia"
 sel_date = max(covid_my_full$date)
+sel_date_state = max(covid_my_state$date)
 
 date_now = max(covid_my_full$date)
 days_first_now = max(covid_my_full$days_first)
@@ -75,10 +77,21 @@ data_plot1$total_deaths_predicted = cumsum(data_plot1$new_deaths_predicted)
 
 model2_rr = tidy(model2, conf.int = T, exponentiate = T)
 ```
-by `r paste0(format(sel_date, "%d %B %Y"), ", 12PM")`.
+```{r}
+#by `r paste0(format(sel_date, "%d %B %Y"), ", 12PM")`.
+```
 
 Overview
 ========
+
+Row
+---
+### Data by `r paste0(format(sel_date, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+```{r}
+valueBox(
+  value = "",
+)
+```
 
 Row
 ---
@@ -213,7 +226,7 @@ valueBox(
 Row
 ---
 
-### **Sources:** Director-General of Health Malaysia and Department of Statistics Malaysia. {.value-box}
+### **Sources:** Ministry of Health Malaysia and Department of Statistics Malaysia. {.value-box}
 ```{r}
 valueBox(
   value = "",
@@ -222,6 +235,15 @@ valueBox(
 
 Cases
 =====
+
+Row
+---
+### Data by `r paste0(format(sel_date, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+```{r}
+valueBox(
+  value = "",
+)
+```
 
 Row
 ---
@@ -287,29 +309,36 @@ Row
 ### New cases, hover/tap on the graph for details.
 ```{r}
 # daily
+offset1 = max(data_plot$new_cases, na.rm=T)/10
 plot1 = ggplot(data_plot) +
   geom_col(aes(x = date, y = new_cases), fill = "red", alpha = 0.7) +
   geom_line(aes(x = date, y = new_cases_predicted), color = "blue", alpha = 0.7) +
-  scale_x_date(date_breaks = "28 day", date_labels = "%d/%m/%y") +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(labels = label_comma()) +
   geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "Tabligh", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot$new_cases, na.rm=T)-offset1, label = "Tabligh", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "MCO", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-05-04")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "CMCO", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot$new_cases, na.rm=T)-offset1, label = "CMCO", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-06-10")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "RMCO1", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "RMCO2", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot$new_cases, na.rm=T)-offset1, label = "RMCO2", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "Sabah\nElection", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "Free\nTravel", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot$new_cases, na.rm=T)-offset1, label = "Free\nTravel", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "MCO2", angle = 90) +
   labs(x = "Date", y = "New cases", title = paste0("New cases by ", format(sel_date, "%d %B %Y"))) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-03-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot$new_cases, na.rm=T)-offset1, label = "School\nReopened", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "MCO3", angle = 90) +
+  labs(x = "Date", y = "New cases", title = paste0("New cases by ", format(sel_date, "%d %B %Y"))) +
   #theme(axis.text.x = element_text(angle = 45, hjust = 1))# +
-  theme_light()
+  theme_classic()
 plot1
 ggplotly(plot1)
 ```
@@ -317,28 +346,34 @@ ggplotly(plot1)
 ### Total cases, hover/tap on the graph for details.
 ```{r}
 # cumulative
+offset2 = max(data_plot$total_cases, na.rm=T)/10
 plot2 = ggplot(data_plot) +
   geom_col(aes(x = date, y = total_cases), fill = "red", alpha = 0.7) +
   geom_line(aes(x = date, y = total_cases_predicted), color = "blue", alpha = 0.7) +
-  scale_x_date(date_breaks = "28 day", date_labels = "%d/%m/%y") +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(labels = label_comma()) +
   geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "Tabligh", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot$total_cases, na.rm=T)-offset2, label = "Tabligh", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "MCO", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-05-04")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "CMCO", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot$total_cases, na.rm=T)-offset2, label = "CMCO", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-06-10")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "RMCO1", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "RMCO2", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot$total_cases, na.rm=T)-offset2, label = "RMCO2", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "Sabah\nElection", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "Free\nTravel", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot$total_cases, na.rm=T)-offset2, label = "Free\nTravel", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "MCO2", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-03-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot$total_cases, na.rm=T)-offset2, label = "School\nReopened", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "MCO3", angle = 90) +
   labs(x = "Date", y = "Cumulative cases", title = paste0("Total cases by ", format(sel_date, "%d %B %Y"))) +
-  theme_light()
+  theme_classic()
 plot2
 ggplotly(plot2)
 ```
@@ -355,6 +390,15 @@ valueBox(
 
 Deaths
 ======
+
+Row
+---
+### Data by `r paste0(format(sel_date, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+```{r}
+valueBox(
+  value = "",
+)
+```
 
 Row
 ---
@@ -420,29 +464,34 @@ Row
 ### New deaths, hover/tap on the graph for details.
 ```{r}
 # daily
+offset3 = max(data_plot1$new_deaths, na.rm=T)/10
 plot3 = ggplot(data_plot1) +
   geom_col(aes(x = date, y = new_deaths), fill = "red", alpha = 0.7) +
   geom_line(aes(x = date, y = new_deaths_predicted), color = "blue", alpha = 0.7) +
-  scale_x_date(date_breaks = "28 day", date_labels = "%d/%m/%y") +
-  scale_y_continuous(limits = c(0, max(data_plot1$new_deaths, na.rm=T)+50)) +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(labels = label_comma(), limits = c(0, max(data_plot1$new_deaths, na.rm=T)+50)) +
   geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "Tabligh", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot1$new_deaths, na.rm=T)-offset3, label = "Tabligh", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "MCO",angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-05-04")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "CMCO", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot1$new_deaths, na.rm=T)-offset3, label = "CMCO", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-06-10")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "RMCO1", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "RMCO2", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot1$new_deaths, na.rm=T)-offset3, label = "RMCO2", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "Sabah\nElection", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "Free\nTravel", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot1$new_deaths, na.rm=T)-offset3, label = "Free\nTravel", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "MCO2", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-03-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot1$new_deaths, na.rm=T)-offset3, label = "School\nReopened", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "MCO3", angle = 90) +
   labs(x = "Date", y = "New deaths", title = paste0("New deaths by ", format(sel_date, "%d %B %Y"))) +
-  theme_light()
+  theme_classic()
 plot3
 ggplotly(plot3)
 ```
@@ -450,29 +499,34 @@ ggplotly(plot3)
 ### Total deaths, hover/tap on the graph for details.
 ```{r}
 # cumulative
+offset4 = max(data_plot1$total_deaths, na.rm=T)/10
 plot4 = ggplot(data_plot1) +
   geom_col(aes(x = date, y = total_deaths), fill = "red", alpha = 0.7) +
   geom_line(aes(x = date, y = total_deaths_predicted), color = "blue", alpha = 0.7) +
-  scale_x_date(date_breaks = "28 day", date_labels = "%d/%m/%y") +
-  scale_y_continuous(limits = c(0, max(data_plot1$total_deaths, na.rm=T)+50)) +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(labels = label_comma(), limits = c(0, max(data_plot1$total_deaths, na.rm=T)+50)) +
   geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "Tabligh", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot1$total_deaths, na.rm=T)-offset4, label = "Tabligh", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "MCO",angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-05-04")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "CMCO", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot1$total_deaths, na.rm=T)-offset4, label = "CMCO", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-06-10")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "RMCO1", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "RMCO2", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot1$total_deaths, na.rm=T)-offset4, label = "RMCO2", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "Sabah\nElection", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
-  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "Free\nTravel", angle = 90) +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot1$total_deaths, na.rm=T)-offset4, label = "Free\nTravel", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "MCO2", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-03-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot1$total_deaths, na.rm=T)-offset4, label = "School\nReopened", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "MCO3", angle = 90) +
   labs(x = "Date", y = "Cumulative deaths", title = paste0("Total deaths by ", format(sel_date, "%d %B %Y"))) +
-  theme_light()
+  theme_classic()
 plot4
 ggplotly(plot4)
 ```
@@ -489,6 +543,14 @@ valueBox(
 
 Cases by State
 ==============
+Row
+---
+### Data by `r paste0(format(sel_date_state, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+```{r}
+valueBox(
+  value = "",
+)
+```
 
 Row
 ---
@@ -498,10 +560,11 @@ Row
 # daily
 plot5 = ggplot(data = data_plots) +
   geom_col(aes(x=date, y=new_cases, fill=state)) +
-  scale_x_date(date_labels = "%d/%m/%y", limits = c(min(data_plots$date), NA)) +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y", limits = c(min(data_plots$date), NA)) +
+  scale_y_continuous(labels = label_comma()) +
   scale_fill_discrete(name="State") +
   labs(x="Date", y="New cases") + 
-  theme_light()
+  theme_classic()
 plot5
 ggplotly(plot5)
 ```
@@ -511,16 +574,25 @@ ggplotly(plot5)
 # cumulative
 plot6 = ggplot(data = data_plots) +
   geom_col(aes(x=date, y=total_cases, fill=state)) +
-  scale_x_date(date_labels = "%d/%m/%y") +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(labels = label_comma()) +
   scale_fill_discrete(name="State") +
   labs(x="Date", y="Cumulative cases") + 
-  theme_light()
+  theme_classic()
 plot6
 ggplotly(plot6)
 ```
 
 Deaths by State
 ==============
+Row
+---
+### Data by `r paste0(format(sel_date_state, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+```{r}
+valueBox(
+  value = "",
+)
+```
 
 Row
 ---
@@ -530,10 +602,11 @@ Row
 # daily
 plot7 = ggplot(data = data_plots) +
   geom_col(aes(x=date, y=new_deaths, fill=state)) +
-  scale_x_date(date_breaks = "28 day", date_labels = "%d/%m/%y") +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(labels = label_comma()) +
   scale_fill_discrete(name="State") +
   labs(x="Date", y="New deaths") + 
-  theme_light()
+  theme_classic()
 plot7
 ggplotly(plot7)
 ```
@@ -543,10 +616,11 @@ ggplotly(plot7)
 # cumulative
 plot8 = ggplot(data = data_plots) +
   geom_col(aes(x=date, y=total_deaths, fill=state)) +
-  scale_x_date(date_breaks = "28 day", date_labels = "%d/%m/%y") +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(labels = label_comma()) +
   scale_fill_discrete(name="State") +
   labs(x="Date", y="Cumulative deaths") + 
-  theme_light()
+  theme_classic()
 plot8
 ggplotly(plot8)
 ```
@@ -561,16 +635,17 @@ Row
 
 **The data are sourced from:**
 
+- Open data on COVID-19 in Malaysia: https://github.com/MoH-Malaysia/covid19-public.
 - Ourworldindata: https://covid.ourworldindata.org/data/ecdc/full_data.csv (up to 21/3/2020).
 - Ministry of Health of Malaysia press statement: https://kpkesihatan.com/, http://www.moh.gov.my/index.php/pages/view/2019-ncov-wuhan-kenyataan-akhbar, https://www.facebook.com/kkmcprc/
-- Our edited data can be accessed from https://data.world/wnarifin/covid-19-my/
-- Last updated on `r format(Sys.Date(), "%d %B %Y")`.
+- Our edited data can be accessed from https://data.world/wnarifin/covid-19-my/ and https://github.com/wnarifin/covid-19-malaysia.
+- Last update on `r format(Sys.Date(), "%d %B %Y")`.
 
 **Epidemiology Modelling Team members, School of Medical Sciences, Universiti Sains Malaysia (USM):**
 
 Department of Community Medicine:
 
-- Assoc. Prof. Dr. Kamarul Imran Musa (Dr. KIM)
+- [Assoc. Prof. Dr. Kamarul Imran Musa (Dr. KIM)](https://myanalytics.com.my/)
 - Dr. Mohd Azmi B. Suliman
 - Dr. Mohamad Zarudin B Mat Said
 - Dr. Wira Alfatah B Ab Ayah @ Ab Aziz

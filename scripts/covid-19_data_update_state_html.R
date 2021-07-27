@@ -27,7 +27,7 @@ deaths_state$date = as.Date(deaths_state$date)
 icu_state$date = as.Date(icu_state$date)
 
 # scrape import, recovery, icu & breathing support data only, still incomplete from moh
-my_date = Sys.Date() - 1
+my_date = Sys.Date() - 1  # add 1 day lag
 # my_date = "2021-07-24"  # for specific date
 my_yr = format(as.Date(my_date), "%Y")
 my_day = format(as.Date(my_date), "%d")
@@ -86,8 +86,10 @@ if (my_date > "2021-01-19") {
   support = str_remove_all(gsub("[()]", "", html_text(my_li[loc])), ",")
   support = as.numeric(str_extract(support, "\\d+"))
 }
-icu; support
 icu_state[icu_state$date == my_date,]
+icu; support
+sum(icu_state[icu_state$date == my_date, "icu_covid"]); sum(icu_state[icu_state$date == my_date, "vent_covid"])
+sum(icu_state[icu_state$date == my_date, "bed_icu_covid"]); sum(icu_state[icu_state$date == my_date, "vent_port"])
 
 # utilize data direct from moh
 if (my_date > "2021-07-23") {
