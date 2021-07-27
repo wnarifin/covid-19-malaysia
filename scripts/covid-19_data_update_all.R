@@ -13,6 +13,7 @@ library(readxl)
 # Data from KPK
 # ============= 
 
+# 2 day lag
 # Malaysia
 # --------
 covid_my_full = read.csv("covid-19_my_full_1.csv")  # data before 2020-03-30
@@ -91,6 +92,7 @@ str(test1)
 colnames(test1)
 test1$date
 
+# 2 days lag
 # State
 # -----
 covid_my_state = read.csv("covid-19_my_state_1.csv")  # data before 2020-03-30

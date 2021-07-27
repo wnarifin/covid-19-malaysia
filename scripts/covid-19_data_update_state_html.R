@@ -119,6 +119,45 @@ if (sum(sapply(c(data_all$new_cases, data_all$new_deaths, data_all$recover, data
   write.xlsx2(data_temp, "covid-19_my_full.xls", sheet = "main", showNA = F, row.names = F)
 }
 
+# === imported cases ===
+my_table_import = my_table_raw
+str_split(my_table_import[,2], " ")
+cases_temp = vector("list", length(17))
+for (i in 1:17) {
+  cases_temp[i] = as.numeric(str_remove_all(gsub("[()]", "", str_split(my_table_import[,2], "[(]")[[i]][2]), ","))
+}
+cases_temp = unlist(cases_temp)
+cases_temp[is.na(cases_temp)] = 0
+my_table_import[,2] = cases_temp
+colnames(my_table_import) = c("state", "new_cases", "total_cases")
+# my_table = cbind(date = rep(my_date, dim(my_table)[1]), my_table[,-1])
+# my_table  # do not read state, names always inconsistent
+# data_state = my_table[,-1]
+data_state_import = my_table_import[,-3]
+# rearrange data_state
+for (i in 1:length(negeri)) {
+  data_state_import[i,] = my_table_import[loc_negeri[i],-3]
+}
+data_state_import
+# numbers by state not reported in table 22/10/2020
+
+# add new sheet to pre-existing xls, change to your file name
+write.xlsx2(data_state_import, "covid-19_my_state_import.xls", sheetName = paste0(format(as.Date(my_date), "%Y%m%d")), append = T, showNA = F, row.names = F)
+
+# extract only total imported cases
+data_import = data.frame(date=my_date, imported_cases=cases_temp[17])
+data_import
+data_import$date = as.Date(data_import$date)
+# read prexisting xls first, the append new row to existing dataframe
+data_temp = read_xls("covid-19_my_import.xls")
+data_temp = as.data.frame(data_temp)
+data_temp = rbind(data_temp, data_import)
+data_temp = as.data.frame(data_temp)
+# write to xls, change to your file name
+write.xlsx2(data_temp, "covid-19_my_import.xls", sheet = "main", showNA = F, row.names = F)
+
+
+# to update with 2 days lag
 # === state ===
 
 # state name list
@@ -169,39 +208,3 @@ data_state
 # add new sheet to pre-existing xls, change to your file name
 write.xlsx2(data_state, "covid-19_my_state.xls", sheetName = paste0(format(as.Date(my_date), "%Y%m%d")), append = T, showNA = F, row.names = F)
 
-# === imported cases ===
-my_table_import = my_table_raw
-str_split(my_table_import[,2], " ")
-cases_temp = vector("list", length(17))
-for (i in 1:17) {
-  cases_temp[i] = as.numeric(str_remove_all(gsub("[()]", "", str_split(my_table_import[,2], "[(]")[[i]][2]), ","))
-}
-cases_temp = unlist(cases_temp)
-cases_temp[is.na(cases_temp)] = 0
-my_table_import[,2] = cases_temp
-colnames(my_table_import) = c("state", "new_cases", "total_cases")
-# my_table = cbind(date = rep(my_date, dim(my_table)[1]), my_table[,-1])
-# my_table  # do not read state, names always inconsistent
-# data_state = my_table[,-1]
-data_state_import = my_table_import[,-3]
-# rearrange data_state
-for (i in 1:length(negeri)) {
-  data_state_import[i,] = my_table_import[loc_negeri[i],-3]
-}
-data_state_import
-# numbers by state not reported in table 22/10/2020
-
-# add new sheet to pre-existing xls, change to your file name
-write.xlsx2(data_state_import, "covid-19_my_state_import.xls", sheetName = paste0(format(as.Date(my_date), "%Y%m%d")), append = T, showNA = F, row.names = F)
-
-# extract only total imported cases
-data_import = data.frame(date=my_date, imported_cases=cases_temp[17])
-data_import
-data_import$date = as.Date(data_import$date)
-# read prexisting xls first, the append new row to existing dataframe
-data_temp = read_xls("covid-19_my_import.xls")
-data_temp = as.data.frame(data_temp)
-data_temp = rbind(data_temp, data_import)
-data_temp = as.data.frame(data_temp)
-# write to xls, change to your file name
-write.xlsx2(data_temp, "covid-19_my_import.xls", sheet = "main", showNA = F, row.names = F)
