@@ -13,7 +13,7 @@ library(readxl)
 # Data from KPK
 # ============= 
 
-# 2 day lag
+# 1 day lag
 # Malaysia
 # --------
 covid_my_full = read.csv("covid-19_my_full_1.csv")  # data before 2020-03-30
