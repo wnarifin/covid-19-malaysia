@@ -143,6 +143,7 @@ data_state_import
 
 # add new sheet to pre-existing xls, change to your file name
 write.xlsx2(data_state_import, "covid-19_my_state_import.xls", sheetName = paste0(format(as.Date(my_date), "%Y%m%d")), append = T, showNA = F, row.names = F)
+system(paste0("cp -f covid-19_my_state_import.xls backup_xls/covid-19_my_state_import", my_date, ".xls" ))
 
 # extract only total imported cases
 data_import = data.frame(date=my_date, imported_cases=cases_temp[17])
@@ -207,4 +208,4 @@ data_state
 
 # add new sheet to pre-existing xls, change to your file name
 write.xlsx2(data_state, "covid-19_my_state.xls", sheetName = paste0(format(as.Date(my_date), "%Y%m%d")), append = T, showNA = F, row.names = F)
-
+system(paste0("cp -f covid-19_my_state.xls backup_xls/covid-19_my_state", my_date, ".xls" ))
