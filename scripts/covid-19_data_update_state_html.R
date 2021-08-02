@@ -109,6 +109,7 @@ data_all = data_all[1,]  # make sure if there is rep row, only 1st row
 data_all
 # this one for all is very good, 100% accuracy
 
+# === local cases ====
 # read prexisting xls first, the append new row to existing dataframe
 data_temp = read_xls("covid-19_my_full.xls")
 data_temp = as.data.frame(data_temp)
@@ -119,7 +120,7 @@ if (sum(sapply(c(data_all$new_cases, data_all$new_deaths, data_all$recover, data
   write.xlsx2(data_temp, "covid-19_my_full.xls", sheet = "main", showNA = F, row.names = F)
 }
 
-# === imported cases ===
+# === imported cases state ====
 my_table_import = my_table_raw
 str_split(my_table_import[,2], " ")
 cases_temp = vector("list", length(17))
@@ -145,6 +146,7 @@ data_state_import
 write.xlsx2(data_state_import, "covid-19_my_state_import.xls", sheetName = paste0(format(as.Date(my_date), "%Y%m%d")), append = T, showNA = F, row.names = F)
 system(paste0("cp -f covid-19_my_state_import.xls backup_xls/covid-19_my_state_import", my_date, ".xls" ))
 
+# === total imported ====
 # extract only total imported cases
 data_import = data.frame(date=my_date, imported_cases=cases_temp[17])
 data_import
@@ -159,7 +161,7 @@ write.xlsx2(data_temp, "covid-19_my_import.xls", sheet = "main", showNA = F, row
 
 
 # to update with 2 days lag
-# === state ===
+# === cases state ====
 
 # state name list
 negeri = c("Perlis", "Kedah", "Pulau Pinang", "Perak", "Selangor", "Negeri Sembilan", "Melaka", "Johor", "Pahang", "Terengganu", "Kelantan", "Sabah", "Sarawak", "Kuala Lumpur", "Putrajaya", "Labuan")
@@ -173,6 +175,14 @@ if (my_date > "2021-07-23") {
   new_deaths_state = deaths_state[deaths_state$date == my_date, ]; new_deaths_state
 }
 
+# need to skip updating if date available < my_date
+
+if (max(deaths_state$date) < my_date) {
+  cat("==== Do not update ====")
+} 
+
+if (max(deaths_state$date) >= my_date) {
+cat("==== Update allowed ====") 
 # get from table earlier
 colnames(my_table) = c("state", "new_cases", "total_cases")
 data_state = my_table  # not in order
@@ -209,3 +219,4 @@ data_state
 # add new sheet to pre-existing xls, change to your file name
 write.xlsx2(data_state, "covid-19_my_state.xls", sheetName = paste0(format(as.Date(my_date), "%Y%m%d")), append = T, showNA = F, row.names = F)
 system(paste0("cp -f covid-19_my_state.xls backup_xls/covid-19_my_state", my_date, ".xls" ))
+}
