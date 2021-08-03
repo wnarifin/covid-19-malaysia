@@ -25,6 +25,10 @@ cases_state$date = as.Date(cases_state$date)
 deaths_my$date = as.Date(deaths_my$date)
 deaths_state$date = as.Date(deaths_state$date)
 icu_state$date = as.Date(icu_state$date)
+max(cases_my$date)
+max(cases_state$date)
+max(deaths_my$date)
+max(deaths_state$date)
 
 # scrape import, recovery, icu & breathing support data only, still incomplete from moh
 my_date = Sys.Date() - 1  # add 1 day lag
