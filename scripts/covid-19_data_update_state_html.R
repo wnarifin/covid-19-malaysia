@@ -29,9 +29,10 @@ max(cases_my$date)
 max(cases_state$date)
 max(deaths_my$date)
 max(deaths_state$date)
+max(icu_state$date)
 
 # scrape import, recovery, icu & breathing support data only, still incomplete from moh
-my_date = Sys.Date() - 1  # add 1 day lag
+my_date = Sys.Date() - 4  # add 1 day lag
 # my_date = "2021-07-24"  # for specific date
 my_yr = format(as.Date(my_date), "%Y")
 my_day = format(as.Date(my_date), "%d")
@@ -167,6 +168,45 @@ write.xlsx2(data_temp, "covid-19_my_import.xls", sheet = "main", showNA = F, row
 # to update with 2 days lag
 # === cases state ====
 
+# need to skip updating if date available < my_date
+
+# put it here for ease of access
+# scrape import, recovery, icu & breathing support data only, still incomplete from moh
+my_date = Sys.Date() - 1  # add 1 day lag
+# my_date = "2021-07-24"  # for specific date
+my_yr = format(as.Date(my_date), "%Y")
+my_day = format(as.Date(my_date), "%d")
+my_day_no = as.numeric(my_day)
+my_mo = format(as.Date(my_date), "%m")
+my_mo_no = as.numeric(my_mo)
+my_mo_list = c("januari", "februari", "mac", "april", "mei", "jun", "julai", "ogos", "september", "oktober", "november", "disember")
+kpk_url = paste0("https://kpkesihatan.com/", my_yr, "/", my_mo, "/", my_day, "/kenyataan-akhbar-kpk-", my_day_no,
+                 "-", my_mo_list[my_mo_no], "-", my_yr, "-situasi-semasa-jangkitan-penyakit-coronavirus-2019-covid-19-di-malaysia/")
+
+# page:
+kpk_page = try(read_html(kpk_url), T)
+# test loaded
+str(kpk_page)  # make sure html page is loaded, not error
+
+# table: new cases
+# table, 1-malay, 2-english
+# table_loc = grep("KES BAHARU", html_nodes(kpk_page, "table"), ignore.case = T)
+# still need to extract this table bcs the best way to extract imported cases
+table_loc = grep("KES BAHARU", html_nodes(kpk_page, "table"), ignore.case = F)
+my_cases = html_nodes(kpk_page, "table")[table_loc]
+my_table = html_table(my_cases, fill = T, header = T)
+my_table = as.data.frame(my_table)
+my_table_raw = my_table  # for use in imported case
+# remove brackets, from 24/4 starts having report of imported cases in (  )
+cases_temp = vector("list", length(17))
+# for (i in 1:17) cases_temp[i] = str_split(my_table[,2], " ")[[i]][1]
+for (i in 1:17) cases_temp[i] = str_split(my_table[,2], "[(]")[[i]][1]
+cases_temp = unlist(cases_temp)
+cases_temp = str_trim(cases_temp)  # remove space
+# end remove bracket attempt
+my_table[,2] = as.numeric(str_remove_all(cases_temp, ","))
+my_table[,3] = as.numeric(str_remove_all(my_table[,3], ","))
+
 # state name list
 negeri = c("Perlis", "Kedah", "Pulau Pinang", "Perak", "Selangor", "Negeri Sembilan", "Melaka", "Johor", "Pahang", "Terengganu", "Kelantan", "Sabah", "Sarawak", "Kuala Lumpur", "Putrajaya", "Labuan")
 
@@ -179,14 +219,6 @@ if (my_date > "2021-07-23") {
   new_deaths_state = deaths_state[deaths_state$date == my_date, ]; new_deaths_state
 }
 
-# need to skip updating if date available < my_date
-
-if (max(deaths_state$date) < my_date) {
-  cat("==== Do not update ====")
-} 
-
-if (max(deaths_state$date) >= my_date) {
-cat("==== Update allowed ====") 
 # get from table earlier
 colnames(my_table) = c("state", "new_cases", "total_cases")
 data_state = my_table  # not in order
@@ -220,7 +252,13 @@ data_state_deaths
 data_state$new_deaths = c(data_state_deaths[,2], sum(data_state_deaths[,2]))
 data_state
 
-# add new sheet to pre-existing xls, change to your file name
-write.xlsx2(data_state, "covid-19_my_state.xls", sheetName = paste0(format(as.Date(my_date), "%Y%m%d")), append = T, showNA = F, row.names = F)
-system(paste0("cp -f covid-19_my_state.xls backup_xls/covid-19_my_state", my_date, ".xls" ))
+if (max(deaths_state$date) < my_date) {
+  cat("==== Do not update ====")
+} else if (max(deaths_state$date) >= my_date) {
+  cat("==== Update allowed ====") 
+  # add new sheet to pre-existing xls, change to your file name
+  write.xlsx2(data_state, "covid-19_my_state.xls", sheetName = paste0(format(as.Date(my_date), "%Y%m%d")), append = T, showNA = F, row.names = F)
+  system(paste0("cp -f covid-19_my_state.xls backup_xls/covid-19_my_state", my_date, ".xls" ))
+} else {
+  cat("==== Error ====")
 }
