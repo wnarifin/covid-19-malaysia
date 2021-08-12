@@ -7,133 +7,165 @@ output:
     social: menu
     source_code: https://github.com/wnarifin/covid-19-malaysia/
     navbar:
-      - {title: "SIR Model", href: "https://wnarifin.github.io/covid-19-malaysia-sir/", align: right}
+      - {title: "SIR Model", href: "https://healthdata.usm.my:3939/content/182", align: right}
+      - {title: "Vaccination Progress", href: "https://healthdata.usm.my:3939/content/243", align: right}
     theme: default
 ---
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
-library(ggplot2)
+library(tidyverse)
 library(plotly)
 library(broom)
 library(scales)
 
-# --- Malaysia ---
-# covid_my_full = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_full.csv")
-covid_my_full = read.csv("covid-19_my_full.csv")
-covid_my_full$date = as.Date(covid_my_full$date)
+# --- Data ---
 
-# --- state ---
-# covid_my_state = read.csv("https://wnarifin.github.io/covid-19-malaysia/covid-19_my_state.csv")
-covid_my_state = read.csv("covid-19_my_state.csv")
-covid_my_state$date = as.Date(covid_my_state$date)
-data_plots = covid_my_state
+# Data directly from MoH @ https://github.com/MoH-Malaysia/covid19-public
 
-sel_location = "Malaysia"
-sel_date = max(covid_my_full$date)
-sel_date_state = max(covid_my_state$date)
+# Issues
+# no recovery data @ national & state level
+# no icu, ventilation count @ national level
+# icu & vent @ state level late update, & sum for all states is not consistent with press release for Malaysia
+# will be added once available
 
-date_now = max(covid_my_full$date)
-days_first_now = max(covid_my_full$days_first)
-days_tabligh_now = max(covid_my_full$days_tabligh)
-days_mco_now = max(covid_my_full$days_mco)
-days_cmco_now = max(covid_my_full$days_cmco)
-days_rmco_now = max(covid_my_full$days_rmco)
+# -- Malaysia --
+cases_my = read.csv("https://raw.githubusercontent.com/MoH-Malaysia/covid19-public/main/epidemic/cases_malaysia.csv")
+deaths_my = read.csv("https://raw.githubusercontent.com/MoH-Malaysia/covid19-public/main/epidemic/deaths_malaysia.csv")
 
-# cases
-model1 = glm(new_cases ~ days_tabligh + days_mco + days_cmco + days_rmco, family = "quasipoisson",  data = covid_my_full)
-max_day = 7
-data_week = data.frame(date = date_now + 1:max_day, new_cases = rep(NA, max_day), total_cases = rep(NA, max_day),
-                       days_tabligh = days_tabligh_now + 1:max_day, days_mco = days_mco_now + 1:max_day,
-                       days_cmco = days_cmco_now + 1:max_day, days_rmco = days_rmco_now + 1:max_day)
-data_plot = subset(covid_my_full, select = c(date, new_cases, total_cases, days_tabligh, days_mco, days_cmco, days_rmco))
-data_plot = rbind(data_plot, data_week)
-data_plot$new_cases_predicted = round(predict(model1, data_plot, type = "response"))
-data_plot$total_cases_predicted = cumsum(data_plot$new_cases_predicted)
+# -- State --
+cases_state = read.csv("https://raw.githubusercontent.com/MoH-Malaysia/covid19-public/main/epidemic/cases_state.csv")
+deaths_state = read.csv("https://raw.githubusercontent.com/MoH-Malaysia/covid19-public/main/epidemic/deaths_state.csv")
+icu_state = read.csv("https://raw.githubusercontent.com/MoH-Malaysia/covid19-public/main/epidemic/icu.csv")
 
-# based on predicted total counts in the past 7 days + future 7 days
-data_double = data_plot[tail(which(data_plot$date >= date_now - 7), 14),]
+# prepare date as.Date
+cases_my$date = as.Date(cases_my$date)
+deaths_my$date = as.Date(deaths_my$date)
+cases_state$date = as.Date(cases_state$date)
+deaths_state$date = as.Date(deaths_state$date)
+icu_state$date = as.Date(icu_state$date)
+
+sel_date = min(max(cases_my$date), max(deaths_my$date))
+sel_date_state = min(max(cases_state$date), max(deaths_state$date))
+sel_date_icu = max(icu_state$date)
+date_now = sel_date  # for compatibility with existing code, will change later
+
+# Enrich ICU data
+
+# -- Malaysia -- 
+icu_my = icu_state %>% group_by(date) %>%
+  summarize(
+    bed_icu_covid = sum(bed_icu_covid),
+    vent = sum(vent),
+    icu_covid = sum(icu_covid),
+    vent_covid = sum(vent_covid)
+  ) %>%
+  mutate(icu_util = icu_covid / bed_icu_covid,
+         vent_util = vent_covid / vent)
+
+# -- State --
+icu_state = icu_state %>% mutate(icu_util = icu_covid / bed_icu_covid,
+                                 vent_util = vent_covid / vent)
+
+# Cases - for plotting
+data_plot = subset(cases_my, select = c(date, cases_new))
+data_plot$total_cases = cumsum(data_plot$cases_new)
+data_plot = rename(data_plot, new_cases = cases_new)
+
+# based on predicted total counts in the past 14 days
+data_double = data_plot[tail(which(data_plot$date >= date_now - 14), 14),]
 data_double$days = 1:14
-model_ = glm(total_cases_predicted ~ days, family = "quasipoisson", data_double)
-# log(2) / log(exp(coef(model_)[2]))
-days_to_double = log(2) / coef(model_)[2]
+model1 = glm(total_cases ~ days, family = "quasipoisson", data_double)
+summary(model1)
+days_to_double = log(2) / coef(model1)[2]
 
-model1_rr = tidy(model1, conf.int = T, exponentiate = T)
+# Deaths - for plotting
+data_plot1 = subset(deaths_my, select = c(date, deaths_new))
+data_plot1$total_deaths = cumsum(data_plot1$deaths_new)
+data_plot1 = rename(data_plot1, new_deaths = deaths_new)
 
-# deaths
-model2 = glm(new_deaths ~ icu, family = "quasipoisson", data = covid_my_full)
-# icu to predict new_deaths
+# ICU data - for plotting
+data_plot_icu = icu_my
+data_plot_icu_state = icu_state
 
-# predict icu count, better linear model
-model_i = glm(icu ~ new_cases, data = covid_my_full)
+# State cases - for plotting
+data_plot_cases_state = cases_state
+data_plot_cases_state = rename(data_plot_cases_state, new_cases = cases_new)
+data_plot_cases_state = data_plot_cases_state %>% group_by(state) %>% mutate(total_cases = cumsum(new_cases))
+data_plot_cases_state = as.data.frame(data_plot_cases_state)
 
-# have to use icu_predicted + 7 days
-icu_ = round(predict(model_i, list(new_cases = tail(data_plot$new_cases_predicted, 7)), "response"))
-data_week1 = data.frame(date = date_now + 1:7, new_deaths = rep(NA, 7), total_deaths = rep(NA, 7), icu = icu_)
-data_plot1 = subset(covid_my_full, select = c(date, new_deaths, total_deaths, icu))
-data_plot1 = rbind(data_plot1, data_week1)
-data_plot1$new_deaths_predicted = round(predict(model2, data_plot1, type = "response"))
-data_plot1$total_deaths_predicted = cumsum(data_plot1$new_deaths_predicted)
+data_plot_deaths_state = deaths_state
+data_plot_deaths_state = rename(data_plot_deaths_state, new_deaths = deaths_new)
+data_plot_deaths_state = data_plot_deaths_state %>% group_by(state) %>% mutate(total_deaths = cumsum(new_deaths))
+data_plot_deaths_state = as.data.frame(data_plot_deaths_state)
 
-model2_rr = tidy(model2, conf.int = T, exponentiate = T)
+# ggplot legend
+colors = c("Capacity" = "blue")
 ```
-```{r}
-#by `r paste0(format(sel_date, "%d %B %Y"), ", 12PM")`.
-```
 
-Overview
-========
+# Overview
 
-Row
----
+## Row
+
 ### Data by `r paste0(format(sel_date, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+
 ```{r}
 valueBox(
   value = "",
 )
 ```
 
-Row
----
+## Row
 
 ### New cases {.value-box}
+
 ```{r}
 valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "new_cases"],
+  value = data_plot[dim(data_plot)[1], "new_cases"],
   icon = "fa-area-chart",
   color = "orange"
 )
 ```
 
-### Active cases {.value-box}
-```{r}
-valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "total_cases"] - covid_my_full[dim(covid_my_full)[1], "total_recover"] - covid_my_full[dim(covid_my_full)[1], "total_deaths"],
-  icon = "fa-area-chart",
-  color = "orange"
-)
-```
+<!-- ### Active cases {.value-box} -->
+
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = data_plot[dim(covid_my_full)[1], "total_cases"] - covid_my_full[dim(covid_my_full)[1], "total_recover"] - covid_my_full[dim(covid_my_full)[1], "total_deaths"], -->
+
+<!--   icon = "fa-area-chart", -->
+
+<!--   color = "orange" -->
+
+<!-- ) -->
+
+<!-- ``` -->
 
 ### Total cases {.value-box}
+
 ```{r}
 valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "total_cases"],
+  value = data_plot[dim(data_plot)[1], "total_cases"],
   icon = "fa-area-chart",
   color = "orange"
 )
 ```
 
 ### cases per 100,000 persons {.value-box}
+
 ```{r}
 # Malaysian population is 32.68 mil at 4th quarter 2019
 valueBox(
-  value = round(covid_my_full[dim(covid_my_full)[1], "total_cases"] / (32.68*1000000) * 100000, 2),
+  value = round(data_plot[dim(data_plot)[1], "total_cases"] / (32.68*1000000) * 100000, 2),
   icon = "fa-area-chart",
   color = "orange"
 )
 ```
 
 ### days to double the number of total cases {.value-box}
+
 ```{r}
 valueBox(
   value = round(days_to_double, 2),
@@ -142,113 +174,151 @@ valueBox(
 )
 ```
 
-Row
----
+## Row
 
 ### New deaths {.value-box}
+
 ```{r}
 valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "new_deaths"],
+  value = data_plot1[dim(data_plot1)[1], "new_deaths"],
   icon = "fa-area-chart",
   color = "red"
 )
 ```
 
 ### Total deaths {.value-box}
+
 ```{r}
 valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "total_deaths"],
+  value = data_plot1[dim(data_plot1)[1], "total_deaths"],
   icon = "fa-area-chart",
   color = "red"
 )
 ```
 
 ### deaths per 1000 cases {.value-box}
+
 ```{r}
 valueBox(
-  value = round(covid_my_full[dim(covid_my_full)[1], "total_deaths"] / covid_my_full[dim(covid_my_full)[1], "total_cases"] * 1000, 2),
+  value = round(data_plot1[dim(data_plot1)[1], "total_deaths"] / data_plot[dim(data_plot)[1], "total_cases"] * 1000, 2),
   icon = "fa-area-chart",
   color = "red"
 )
 ```
 
-Row
----
+<!-- Row -->
 
-### in ICU {.value-box}
-```{r}
-valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "icu"],
-  icon = "fa-area-chart",
-  color = "blue"
-)
-```
+<!-- --- -->
 
-### require breathing support {.value-box}
-```{r}
-valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "support"],
-  icon = "fa-area-chart",
-  color = "blue"
-)
-```
+<!-- ### in ICU {.value-box} -->
 
-Row
----
+<!-- ```{r} -->
 
-### Recovered {.value-box}
-```{r}
-valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "recover"],
-  icon = "fa-area-chart",
-  color = "green"
-)
-```
+<!-- valueBox( -->
 
-### Total recovered {.value-box}
-```{r}
-valueBox(
-  value = covid_my_full[dim(covid_my_full)[1], "total_recover"],
-  icon = "fa-area-chart",
-  color = "green"
-)
-```
+<!--   value = covid_my_full[dim(covid_my_full)[1], "icu"], -->
 
-### recovered per 1000 cases {.value-box}
-```{r}
-valueBox(
-  value = round(covid_my_full[dim(covid_my_full)[1], "total_recover"] / covid_my_full[dim(covid_my_full)[1], "total_cases"] * 1000, 2),
-  icon = "fa-area-chart",
-  color = "green"
-)
-```
+<!--   icon = "fa-area-chart", -->
 
-Row
----
+<!--   color = "blue" -->
 
-### **Sources:** Ministry of Health Malaysia and Department of Statistics Malaysia. {.value-box}
+<!-- ) -->
+
+<!-- ``` -->
+
+<!-- ### require breathing support {.value-box} -->
+
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = covid_my_full[dim(covid_my_full)[1], "support"], -->
+
+<!--   icon = "fa-area-chart", -->
+
+<!--   color = "blue" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+<!-- Row -->
+
+<!-- --- -->
+
+<!-- ### Recovered {.value-box} -->
+
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = covid_my_full[dim(covid_my_full)[1], "recover"], -->
+
+<!--   icon = "fa-area-chart", -->
+
+<!--   color = "green" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+<!-- ### Total recovered {.value-box} -->
+
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = covid_my_full[dim(covid_my_full)[1], "total_recover"], -->
+
+<!--   icon = "fa-area-chart", -->
+
+<!--   color = "green" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+<!-- ### recovered per 1000 cases {.value-box} -->
+
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = round(covid_my_full[dim(covid_my_full)[1], "total_recover"] / covid_my_full[dim(covid_my_full)[1], "total_cases"] * 1000, 2), -->
+
+<!--   icon = "fa-area-chart", -->
+
+<!--   color = "green" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+## Row
+
+### The date of data update depends on the availability of the data from MoH github. Recovery data is not yet available in MoH github. {.value-box}
 ```{r}
 valueBox(
   value = "",
 )
 ```
 
-Cases
-=====
+# Cases
 
-Row
----
+## Row
+
 ### Data by `r paste0(format(sel_date, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+
 ```{r}
 valueBox(
   value = "",
 )
 ```
 
-Row
----
+## Row
 
-### new cases today  {.value-box}
+### new cases today {.value-box}
+
 ```{r}
 valueBox(
   value = data_plot[data_plot$date == date_now, "new_cases"],
@@ -257,34 +327,56 @@ valueBox(
 )
 ```
 
-### new cases expected tomorrow  {.value-box}
-```{r}
-valueBox(
-  value = data_plot[data_plot$date == date_now + 1, "new_cases_predicted"],
-  #icon = "fa-area-chart",
-  color = "orange"
-)
-```
+<!-- ### new cases expected tomorrow  {.value-box} -->
 
-### additional new cases expected in 3 days  {.value-box}
-```{r}
-valueBox(
-  value = data_plot[data_plot$date == date_now + 3, "total_cases_predicted"] - data_plot[data_plot$date == date_now, "total_cases_predicted"],
-  #icon = "fa-area-chart",
-  color = "orange"
-)
-```
+<!-- ```{r} -->
 
-### additional new cases expected in a week  {.value-box}
-```{r}
-valueBox(
-  value = data_plot[data_plot$date == date_now + 7, "total_cases_predicted"] - data_plot[data_plot$date == date_now, "total_cases_predicted"],
-  #icon = "fa-area-chart",
-  color = "orange"
-)
-```
+<!-- valueBox( -->
 
-### total cases today  {.value-box}
+<!--   value = data_plot[data_plot$date == date_now + 1, "new_cases_predicted"], -->
+
+<!--   #icon = "fa-area-chart", -->
+
+<!--   color = "orange" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+<!-- ### additional new cases expected in 3 days  {.value-box} -->
+
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = data_plot[data_plot$date == date_now + 3, "total_cases_predicted"] - data_plot[data_plot$date == date_now, "total_cases_predicted"], -->
+
+<!--   #icon = "fa-area-chart", -->
+
+<!--   color = "orange" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+<!-- ### additional new cases expected in a week  {.value-box} -->
+
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = data_plot[data_plot$date == date_now + 7, "total_cases_predicted"] - data_plot[data_plot$date == date_now, "total_cases_predicted"], -->
+
+<!--   #icon = "fa-area-chart", -->
+
+<!--   color = "orange" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+### total cases today {.value-box}
+
 ```{r}
 valueBox(
   value = data_plot[data_plot$date == date_now, "total_cases"],
@@ -293,26 +385,34 @@ valueBox(
 )
 ```
 
-### total cases expected in a week  {.value-box}
-```{r}
-valueBox(
-  value = data_plot[data_plot$date == date_now + 7, "total_cases_predicted"] - data_plot[data_plot$date == date_now, "total_cases_predicted"] + data_plot[data_plot$date == date_now, "total_cases"],
-  #value = data_plot[data_plot$date == date_now + 7, "total_cases_predicted"],
-  #icon = "fa-area-chart",
-  color = "orange"
-)
-```
+<!-- ### total cases expected in a week  {.value-box} -->
 
-Row
----
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = data_plot[data_plot$date == date_now + 7, "total_cases_predicted"] - data_plot[data_plot$date == date_now, "total_cases_predicted"] + data_plot[data_plot$date == date_now, "total_cases"], -->
+
+<!--   #value = data_plot[data_plot$date == date_now + 7, "total_cases_predicted"], -->
+
+<!--   #icon = "fa-area-chart", -->
+
+<!--   color = "orange" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+## Row
 
 ### New cases, hover/tap on the graph for details.
+
 ```{r}
 # daily
 offset1 = max(data_plot$new_cases, na.rm=T)/10
 plot1 = ggplot(data_plot) +
   geom_col(aes(x = date, y = new_cases), fill = "red", alpha = 0.7) +
-  geom_line(aes(x = date, y = new_cases_predicted), color = "blue", alpha = 0.7) +
+  #geom_line(aes(x = date, y = new_cases_predicted), color = "blue", alpha = 0.7) +
   scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
   scale_y_continuous(labels = label_comma()) +
   geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
@@ -336,6 +436,8 @@ plot1 = ggplot(data_plot) +
   annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot$new_cases, na.rm=T)-offset1, label = "School\nReopened", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot$new_cases, na.rm=T)-75, label = "MCO3", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-10")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-08-10")+2, y = max(data_plot$new_cases, na.rm=T)-offset1, label = "Free\nTravel\nfor\nVaccinated", angle = 90) +
   labs(x = "Date", y = "New cases", title = paste0("New cases by ", format(sel_date, "%d %B %Y"))) +
   #theme(axis.text.x = element_text(angle = 45, hjust = 1))# +
   theme_classic()
@@ -344,12 +446,13 @@ ggplotly(plot1)
 ```
 
 ### Total cases, hover/tap on the graph for details.
+
 ```{r}
 # cumulative
 offset2 = max(data_plot$total_cases, na.rm=T)/10
 plot2 = ggplot(data_plot) +
   geom_col(aes(x = date, y = total_cases), fill = "red", alpha = 0.7) +
-  geom_line(aes(x = date, y = total_cases_predicted), color = "blue", alpha = 0.7) +
+  #geom_line(aes(x = date, y = total_cases_predicted), color = "blue", alpha = 0.7) +
   scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
   scale_y_continuous(labels = label_comma()) +
   geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
@@ -372,38 +475,30 @@ plot2 = ggplot(data_plot) +
   annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot$total_cases, na.rm=T)-offset2, label = "School\nReopened", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot$total_cases, na.rm=T)-75, label = "MCO3", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-10")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-08-10")+2, y = max(data_plot$total_cases, na.rm=T)-offset2, label = "Free\nTravel\nfor\nVaccinated", angle = 90) +
   labs(x = "Date", y = "Cumulative cases", title = paste0("Total cases by ", format(sel_date, "%d %B %Y"))) +
   theme_classic()
 plot2
 ggplotly(plot2)
 ```
 
-Row
----
+# Deaths
 
-### **Significant factors:** 1. Days since Tabligh gathering (`r paste0("Rate ratio: ", round(model1_rr[2, "estimate"],2), " [95% CI: ", round(model1_rr[2, "conf.low"],2), ", ", round(model1_rr[2, "conf.high"],2), "]")` per day), 2. Days since movement control order (`r paste0("Rate ratio: ", round(model1_rr[3, "estimate"],2), " [95% CI: ", round(model1_rr[3, "conf.low"],2), ", ", round(model1_rr[3, "conf.high"],2), "]")` per day), 3. Days since conditional movement control order (`r paste0("Rate ratio: ", round(model1_rr[4, "estimate"],2), " [95% CI: ", round(model1_rr[4, "conf.low"],2), ", ", round(model1_rr[4, "conf.high"],2), "]")` per day), 4. Days since recovery movement control order (`r paste0("Rate ratio: ", round(model1_rr[5, "estimate"],2), " [95% CI: ", round(model1_rr[5, "conf.low"],2), ", ", round(model1_rr[5, "conf.high"],2), "]")` per day) based on a quasipoisson regression model. {.value-box}
-```{r}
-valueBox(
-  value = "",
-)
-```
+## Row
 
-Deaths
-======
-
-Row
----
 ### Data by `r paste0(format(sel_date, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+
 ```{r}
 valueBox(
   value = "",
 )
 ```
 
-Row
----
+## Row
 
-### new deaths today  {.value-box}
+### new deaths today {.value-box}
+
 ```{r}
 valueBox(
   value = data_plot1[data_plot1$date == date_now, "new_deaths"],
@@ -412,34 +507,56 @@ valueBox(
 )
 ```
 
-### new deaths expected tomorrow  {.value-box}
-```{r}
-valueBox(
-  value = data_plot1[data_plot1$date == date_now + 1, "new_deaths_predicted"],
-  #icon = "fa-area-chart",
-  color = "red"
-)
-```
+<!-- ### new deaths expected tomorrow  {.value-box} -->
 
-### additional new deaths expected in 3 days  {.value-box}
-```{r}
-valueBox(
-  value = data_plot1[data_plot1$date == date_now + 3, "total_deaths_predicted"] - data_plot1[data_plot1$date == date_now, "total_deaths_predicted"],
-  #icon = "fa-area-chart",
-  color = "red"
-)
-```
+<!-- ```{r} -->
 
-### additional new deaths expected in a week  {.value-box}
-```{r}
-valueBox(
-  value = data_plot1[data_plot1$date == date_now + 7, "total_deaths_predicted"] - data_plot1[data_plot1$date == date_now, "total_deaths_predicted"],
-  #icon = "fa-area-chart",
-  color = "red"
-)
-```
+<!-- valueBox( -->
 
-### total deaths today  {.value-box}
+<!--   value = data_plot1[data_plot1$date == date_now + 1, "new_deaths_predicted"], -->
+
+<!--   #icon = "fa-area-chart", -->
+
+<!--   color = "red" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+<!-- ### additional new deaths expected in 3 days  {.value-box} -->
+
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = data_plot1[data_plot1$date == date_now + 3, "total_deaths_predicted"] - data_plot1[data_plot1$date == date_now, "total_deaths_predicted"], -->
+
+<!--   #icon = "fa-area-chart", -->
+
+<!--   color = "red" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+<!-- ### additional new deaths expected in a week  {.value-box} -->
+
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   value = data_plot1[data_plot1$date == date_now + 7, "total_deaths_predicted"] - data_plot1[data_plot1$date == date_now, "total_deaths_predicted"], -->
+
+<!--   #icon = "fa-area-chart", -->
+
+<!--   color = "red" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+### total deaths today {.value-box}
+
 ```{r}
 valueBox(
   value = data_plot1[data_plot1$date == date_now, "total_deaths"],
@@ -448,26 +565,34 @@ valueBox(
 )
 ```
 
-### total deaths expected in a week  {.value-box}
-```{r}
-valueBox(
-  data_plot1[data_plot1$date == date_now + 7, "total_deaths_predicted"] - data_plot1[data_plot1$date == date_now, "total_deaths_predicted"] + data_plot1[data_plot1$date == date_now, "total_deaths"],
-  #value = data_plot1[data_plot1$date == date_now + 7, "total_deaths_predicted"],
-  #icon = "fa-area-chart",
-  color = "red"
-)
-```
+<!-- ### total deaths expected in a week  {.value-box} -->
 
-Row
----
+<!-- ```{r} -->
+
+<!-- valueBox( -->
+
+<!--   data_plot1[data_plot1$date == date_now + 7, "total_deaths_predicted"] - data_plot1[data_plot1$date == date_now, "total_deaths_predicted"] + data_plot1[data_plot1$date == date_now, "total_deaths"], -->
+
+<!--   #value = data_plot1[data_plot1$date == date_now + 7, "total_deaths_predicted"], -->
+
+<!--   #icon = "fa-area-chart", -->
+
+<!--   color = "red" -->
+
+<!-- ) -->
+
+<!-- ``` -->
+
+## Row
 
 ### New deaths, hover/tap on the graph for details.
+
 ```{r}
 # daily
 offset3 = max(data_plot1$new_deaths, na.rm=T)/10
 plot3 = ggplot(data_plot1) +
   geom_col(aes(x = date, y = new_deaths), fill = "red", alpha = 0.7) +
-  geom_line(aes(x = date, y = new_deaths_predicted), color = "blue", alpha = 0.7) +
+  #geom_line(aes(x = date, y = new_deaths_predicted), color = "blue", alpha = 0.7) +
   scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
   scale_y_continuous(labels = label_comma(), limits = c(0, max(data_plot1$new_deaths, na.rm=T)+50)) +
   geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
@@ -490,6 +615,8 @@ plot3 = ggplot(data_plot1) +
   annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot1$new_deaths, na.rm=T)-offset3, label = "School\nReopened", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot1$new_deaths, na.rm=T)+30, label = "MCO3", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-10")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-08-10")+2, y = max(data_plot1$new_deaths, na.rm=T)-offset3, label = "Free\nTravel\nfor\nVaccinated", angle = 90) +
   labs(x = "Date", y = "New deaths", title = paste0("New deaths by ", format(sel_date, "%d %B %Y"))) +
   theme_classic()
 plot3
@@ -497,12 +624,13 @@ ggplotly(plot3)
 ```
 
 ### Total deaths, hover/tap on the graph for details.
+
 ```{r}
 # cumulative
 offset4 = max(data_plot1$total_deaths, na.rm=T)/10
 plot4 = ggplot(data_plot1) +
   geom_col(aes(x = date, y = total_deaths), fill = "red", alpha = 0.7) +
-  geom_line(aes(x = date, y = total_deaths_predicted), color = "blue", alpha = 0.7) +
+  #geom_line(aes(x = date, y = total_deaths_predicted), color = "blue", alpha = 0.7) +
   scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
   scale_y_continuous(labels = label_comma(), limits = c(0, max(data_plot1$total_deaths, na.rm=T)+50)) +
   geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
@@ -525,156 +653,442 @@ plot4 = ggplot(data_plot1) +
   annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot1$total_deaths, na.rm=T)-offset4, label = "School\nReopened", angle = 90) +
   geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
   annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot1$total_deaths, na.rm=T)+30, label = "MCO3", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-10")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-08-10")+2, y = max(data_plot1$total_deaths, na.rm=T)-offset4, label = "Free\nTravel\nfor\nVaccinated", angle = 90) +
   labs(x = "Date", y = "Cumulative deaths", title = paste0("Total deaths by ", format(sel_date, "%d %B %Y"))) +
   theme_classic()
 plot4
 ggplotly(plot4)
 ```
 
-Row
----
+# ICU
 
-### **Significant factor:** 1. Number of cases in ICU (`r paste0("Rate ratio: ", round(model2_rr[2, "estimate"],2), " (95% CI: ", round(model2_rr[2, "conf.low"],2), ", ", round(model2_rr[2, "conf.high"],2), ")")` per increase in case in ICU). {.value-box}
+## Row
+
+### Data by `r paste0(format(sel_date_icu, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+
 ```{r}
 valueBox(
   value = "",
 )
 ```
 
-Cases by State
-==============
-Row
----
+## Row
+
+### total dedicated ICU beds for COVID-19{.value-box}
+
+```{r}
+valueBox(
+  value = data_plot_icu[data_plot_icu$date == sel_date_icu, "bed_icu_covid"],
+  #icon = "fa-area-chart",
+  color = "blue"
+)
+```
+
+### total ICU beds used for COVID-19 patients{.value-box}
+
+```{r}
+valueBox(
+  value = data_plot_icu[data_plot_icu$date == sel_date_icu, "icu_covid"],
+  #icon = "fa-area-chart",
+  color = "blue"
+)
+```
+
+### ICU bed utilization {.value-box}
+
+```{r}
+valueBox(
+  value = paste(round(data_plot_icu[data_plot_icu$date == sel_date_icu, "icu_util"] * 100, 2), "%"),
+  #icon = "fa-area-chart",
+  color = "blue"
+)
+```
+
+### total available ventilators{.value-box}
+
+```{r}
+valueBox(
+  value = data_plot_icu[data_plot_icu$date == sel_date_icu, "vent"],
+  #icon = "fa-area-chart",
+  color = "green"
+)
+```
+
+### total ventilators used for COVID-19 patients{.value-box}
+
+```{r}
+valueBox(
+  value = data_plot_icu[data_plot_icu$date == sel_date_icu, "vent_covid"],
+  #icon = "fa-area-chart",
+  color = "green"
+)
+```
+
+### ventilator utilization {.value-box}
+
+```{r}
+valueBox(
+  value = paste(round(data_plot_icu[data_plot_icu$date == sel_date_icu, "vent_util"] * 100, 2), "%"),
+  #icon = "fa-area-chart",
+  color = "green"
+)
+```
+
+## Row
+
+### ICU beds used for COVID-19, hover/tap on the graph for details.
+
+```{r}
+# icu
+offset_icu = max(data_plot_icu$icu_covid, na.rm=T)/10
+plot_icu = ggplot(data_plot_icu, aes(x = date)) +
+  geom_col(aes(y = icu_covid), fill = "red", alpha = 0.7) +
+  geom_line(aes(y = bed_icu_covid, color = "Capacity")) +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-offset_icu, label = "Tabligh", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-75, label = "MCO", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-05-04")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-offset_icu, label = "CMCO", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-06-10")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-75, label = "RMCO1", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-offset_icu, label = "RMCO2", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-75, label = "Sabah\nElection", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-offset_icu, label = "Free\nTravel", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-75, label = "MCO2", angle = 90) +
+  labs(x = "Date", y = "New cases", title = paste0("New cases by ", format(sel_date, "%d %B %Y"))) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-03-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-offset_icu, label = "School\nReopened", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-75, label = "MCO3", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-10")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-08-10")+2, y = max(data_plot_icu$icu_covid, na.rm=T)-offset_icu, label = "Free\nTravel\nfor\nVaccinated", angle = 90) +
+  labs(x = "Date", y = "ICU beds", title = paste0("ICU beds used for COVID-19 by ", format(sel_date_icu, "%d %B %Y")),
+       color = "Legend") +
+  #theme(axis.text.x = element_text(angle = 45, hjust = 1))# +
+  scale_colour_manual(values = colors) +
+  theme_classic()
+plot_icu
+ggplotly(plot_icu)
+```
+
+### Ventilators used for COVID-19, hover/tap on the graph for details.
+
+```{r}
+# vent
+offset_vent = max(data_plot_icu$vent_covid, na.rm=T)/10
+plot_vent = ggplot(data_plot_icu, aes(x = date)) +
+  geom_col(aes(y = vent_covid), fill = "red", alpha = 0.7) +
+  geom_line(aes(y = vent, color = "Capacity")) +
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+  scale_y_continuous(labels = label_comma()) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-02-28")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-02-28")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-offset_icu, label = "Tabligh", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-18")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-03-18")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-75, label = "MCO", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-05-04")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-05-04")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-offset_icu, label = "CMCO", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-06-10")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-06-10")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-75, label = "RMCO1", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-09-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-09-01")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-offset_icu, label = "RMCO2", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-09-26")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-09-26")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-75, label = "Sabah\nElection", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-12-07")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2020-12-07")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-offset_icu, label = "Free\nTravel", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-01-13")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-01-13")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-75, label = "MCO2", angle = 90) +
+  labs(x = "Date", y = "New cases", title = paste0("New cases by ", format(sel_date, "%d %B %Y"))) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-03-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-03-01")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-offset_icu, label = "School\nReopened", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-06-01")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-06-01")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-75, label = "MCO3", angle = 90) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-10")), linetype = "dotted") +
+  annotate(geom = "text", x = as.Date("2021-08-10")+2, y = max(data_plot_icu$vent_covid, na.rm=T)-offset_icu, label = "Free\nTravel\nfor\nVaccinated", angle = 90) +
+  labs(x = "Date", y = "Ventilators", title = paste0("Ventilators used for COVID-19 by ", format(sel_date_icu, "%d %B %Y")),
+       color = "Legend") +
+  #theme(axis.text.x = element_text(angle = 45, hjust = 1))# +
+  scale_colour_manual(values = colors) +
+  theme_classic()
+plot_vent
+ggplotly(plot_vent)
+```
+
+## Row
+
+### **Note**: The number of COVID-19 patients in ICU and ventilator support was calculated based the counts in the state data. This is different from the number reported in press release because of the difference in date and time of update as clarified with the MoH github page maintainer. {.value-box}
+```{r}
+valueBox(
+  value = "",
+)
+```
+
+# Cases by State
+
+## Row
+
 ### Data by `r paste0(format(sel_date_state, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+
 ```{r}
+
 valueBox(
+
   value = "",
+
 )
+
 ```
 
-Row
----
+## Row
 
 ### New cases, hover/tap on the graph for details.
+
 ```{r}
+
 # daily
-plot5 = ggplot(data = data_plots) +
+
+plot_cases_state = ggplot(data = data_plot_cases_state) +
+
   geom_col(aes(x=date, y=new_cases, fill=state)) +
-  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y", limits = c(min(data_plots$date), NA)) +
+
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y", limits = c(min(data_plot_cases_state$date), NA)) +
+
   scale_y_continuous(labels = label_comma()) +
+
   scale_fill_discrete(name="State") +
-  labs(x="Date", y="New cases") + 
+
+  labs(x="Date", y="New cases") +
+
   theme_classic()
-plot5
-ggplotly(plot5)
+
+plot_cases_state
+
+ggplotly(plot_cases_state)
+
 ```
 
 ### Total cases, hover/tap on the graph for details.
+
 ```{r}
+
 # cumulative
-plot6 = ggplot(data = data_plots) +
+
+plot_cases_state_cum = ggplot(data = data_plot_cases_state) +
+
   geom_col(aes(x=date, y=total_cases, fill=state)) +
+
   scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+
   scale_y_continuous(labels = label_comma()) +
+
   scale_fill_discrete(name="State") +
-  labs(x="Date", y="Cumulative cases") + 
+
+  labs(x="Date", y="Cumulative cases") +
+
   theme_classic()
-plot6
-ggplotly(plot6)
+
+plot_cases_state_cum
+
+ggplotly(plot_cases_state_cum)
+
 ```
 
-Deaths by State
-==============
-Row
----
+# Deaths by State
+
+## Row
+
 ### Data by `r paste0(format(sel_date_state, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+
 ```{r}
+
 valueBox(
+
   value = "",
+
 )
+
 ```
 
-Row
----
+## Row
 
 ### New deaths, hover/tap on the graph for details.
+
 ```{r}
+
 # daily
-plot7 = ggplot(data = data_plots) +
+
+plot_deaths_state = ggplot(data = data_plot_deaths_state) +
+
   geom_col(aes(x=date, y=new_deaths, fill=state)) +
+
   scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+
   scale_y_continuous(labels = label_comma()) +
+
   scale_fill_discrete(name="State") +
-  labs(x="Date", y="New deaths") + 
+
+  labs(x="Date", y="New deaths") +
+
   theme_classic()
-plot7
-ggplotly(plot7)
+
+plot_deaths_state
+
+ggplotly(plot_deaths_state)
+
 ```
 
 ### Total deaths, hover/tap on the graph for details.
+
 ```{r}
+
 # cumulative
-plot8 = ggplot(data = data_plots) +
+
+plot_deaths_state_cum = ggplot(data = data_plot_deaths_state) +
+
   geom_col(aes(x=date, y=total_deaths, fill=state)) +
+
   scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+
   scale_y_continuous(labels = label_comma()) +
+
   scale_fill_discrete(name="State") +
-  labs(x="Date", y="Cumulative deaths") + 
+
+  labs(x="Date", y="Cumulative deaths") +
+
   theme_classic()
-plot8
-ggplotly(plot8)
+
+plot_deaths_state_cum
+
+ggplotly(plot_deaths_state_cum)
+
 ```
 
-Data and Our Team
-=================
+# ICU by State
 
-Row
----
+## Row
 
-###
+### Data by `r paste0(format(sel_date_icu, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+
+```{r}
+
+valueBox(
+
+  value = "",
+
+)
+
+```
+
+## Row
+
+### ICU beds used for COVID-19, hover/tap on the graph for details.
+
+```{r}
+
+# daily
+
+plot_icu_state = ggplot(data = data_plot_icu_state) +
+
+  geom_col(aes(x=date, y=icu_covid, fill=state)) +
+
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y", limits = c(min(data_plot_icu_state$date), NA)) +
+
+  scale_y_continuous(labels = label_comma()) +
+
+  scale_fill_discrete(name="State") +
+
+  labs(x="Date", y="ICU beds") +
+
+  theme_classic()
+
+plot_icu_state
+
+ggplotly(plot_icu_state)
+
+```
+
+### Ventilators used for COVID-19, hover/tap on the graph for details.
+
+```{r}
+
+# cumulative
+
+plot_vent_state_cum = ggplot(data = data_plot_icu_state) +
+
+  geom_col(aes(x=date, y=vent_covid, fill=state)) +
+
+  scale_x_date(date_breaks = "84 day", date_labels = "%d/%m/%y") +
+
+  scale_y_continuous(labels = label_comma()) +
+
+  scale_fill_discrete(name="State") +
+
+  labs(x="Date", y="Ventilators") +
+
+  theme_classic()
+
+plot_vent_state_cum
+
+ggplotly(plot_vent_state_cum)
+
+```
+
+# Data and Our Team
+
+## Row
+
+### 
 
 **The data are sourced from:**
 
-- Open data on COVID-19 in Malaysia: https://github.com/MoH-Malaysia/covid19-public.
-- Ourworldindata: https://covid.ourworldindata.org/data/ecdc/full_data.csv (up to 21/3/2020).
-- Ministry of Health of Malaysia press statement: https://kpkesihatan.com/, http://www.moh.gov.my/index.php/pages/view/2019-ncov-wuhan-kenyataan-akhbar, https://www.facebook.com/kkmcprc/
-- Our edited data can be accessed from https://data.world/wnarifin/covid-19-my/ and https://github.com/wnarifin/covid-19-malaysia.
-- Last update on `r format(Sys.Date(), "%d %B %Y")`.
+-   Open data on COVID-19 in Malaysia: <https://github.com/MoH-Malaysia/covid19-public>.
+-   Ourworldindata: <https://covid.ourworldindata.org/data/ecdc/full_data.csv> (up to 21/3/2020).
+-   Ministry of Health of Malaysia press statement: <https://kpkesihatan.com/>, <http://www.moh.gov.my/index.php/pages/view/2019-ncov-wuhan-kenyataan-akhbar>, <https://www.facebook.com/kkmcprc/>
+-   Our edited data can be accessed from <https://data.world/wnarifin/covid-19-my/> and <https://github.com/wnarifin/covid-19-malaysia>.
+-   Last update on `r format(Sys.Date(), "%d %B %Y")`.
 
 **Epidemiology Modelling Team members, School of Medical Sciences, Universiti Sains Malaysia (USM):**
 
 Department of Community Medicine:
 
-- [Assoc. Prof. Dr. Kamarul Imran Musa (Dr. KIM)](https://myanalytics.com.my/)
-- Dr. Mohd Azmi B. Suliman
-- Dr. Mohamad Zarudin B Mat Said
-- Dr. Wira Alfatah B Ab Ayah @ Ab Aziz
-- Dr. Che Muhammad Nur Hidayat B Che Nawi
-- Dr. Afiqah Syamimi Bt Masrani
-- Mr. Tengku Muhammad Hanis B Tengku Mokhtar
+-   [Assoc. Prof. Dr. Kamarul Imran Musa (Dr. KIM)](https://myanalytics.com.my/)
+-   Dr. Mohd Azmi B. Suliman
+-   Dr. Mohamad Zarudin B Mat Said
+-   Dr. Wira Alfatah B Ab Ayah \@ Ab Aziz
+-   Dr. Che Muhammad Nur Hidayat B Che Nawi
+-   Dr. Afiqah Syamimi Bt Masrani
+-   Mr. Tengku Muhammad Hanis B Tengku Mokhtar
 
 Biostatistics and Research Methodology Unit:
 
-- [Dr. Wan Nor Arifin](https://wnarifin.github.io/)
+-   [Dr. Wan Nor Arifin](https://wnarifin.github.io/)
 
 Jabatan Kesihatan Negeri, Pahang:
 
-- Dr. Sahrol Azmi
+-   Dr. Sahrol Azmi
 
 Pusat Data PPKT Kampus Kesihatan:
 
-- Mohd Fadzali Bakar
-- Mohd Faizal Abdul Manaf
-- Ahmad Syakiren Mazalan 
+-   Mohd Fadzali Bakar
+-   Mohd Faizal Abdul Manaf
+-   Ahmad Syakiren Mazalan
 
 **Disclaimer: We and USM are not responsible for any damage or inconvenience caused directly or indirectly by the use of this dashboard.**
 
 We built this dashboard using
 
-- RStudio
-- Packages:
+-   RStudio
 
-    - flexdashboard
-    - ggplot2
-    - plotly
-    - broom
+-   Packages:
+
+    -   flexdashboard
+    -   tidyverse
+    -   plotly
+    -   broom
