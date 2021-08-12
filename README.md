@@ -1,7 +1,7 @@
 # About "covid-19-malaysia"
-This repository hosts the dashboard Covid-19 Situation in Malaysia. This is accessible from:
+This repository hosts the code for the Covid-19 Situation in Malaysia dashboard. This is accessible from:
 - https://healthdata.usm.my:3939/content/174
-- https://wnarifin.github.io/covid-19-malaysia/ (no longer updated as of 29/7/2021)
+- https://wnarifin.github.io/covid-19-malaysia/ (no longer updated as of 3/8/2021) -- utilize only data shared by MoH
 
 It also contains:
 
@@ -11,5 +11,5 @@ It also contains:
 
 **Updates**
 - As of 23 July 2021, MOH, MOSTI & CITF started sharing data in github at https://github.com/MoH-Malaysia/covid19-public. So, some of the scripts with web scraping code are no longer useful.
-- Data integrated with the data from MOH, new workflow updated in the script. Original script renamed to "scrape_version"
-- Recovery data and imported cases are still scraped as usual.
+- ~~Data integrated with the data from MOH, new workflow updated in the script. Original script renamed to "scrape_version"~~
+- ~~Recovery data and imported cases are still scraped as usual~~
