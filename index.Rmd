@@ -66,11 +66,23 @@ icu_my = icu_state %>% group_by(date) %>%
     vent_covid = sum(vent_covid)
   ) %>%
   mutate(icu_util = icu_covid / beds_icu_covid,
-         vent_util = vent_covid / vent)
+         vent_util = vent_covid / vent) %>%
+  mutate(icu_util_percent = icu_util*100, vent_util_percent = vent_util*100) %>%
+  add_column(state = "Malaysia", .after = "date")
+icu_my$state = as.factor(icu_my$state)
 
 # -- State --
-icu_state = icu_state %>% mutate(icu_util = icu_covid / beds_icu_covid,
-                                 vent_util = vent_covid / vent)
+icu_state_short = icu_state %>% 
+  select(date, state, beds_icu_covid, vent, icu_covid, vent_covid) %>%
+  mutate(icu_util = icu_covid / beds_icu_covid,
+                                 vent_util = vent_covid / vent)  %>%
+  mutate(icu_util_percent = icu_util*100, vent_util_percent = vent_util*100)
+
+# ICU data - for plotting
+data_plot_icu = icu_my
+data_plot_icu_state = icu_state_short
+data_plot_icu_state_my = full_join(data_plot_icu, data_plot_icu_state) %>% arrange(date)
+# includes Malaysia for comparison
 
 # Cases - for plotting
 data_plot_case = subset(cases_my, select = c(date, cases_new))
@@ -88,10 +100,6 @@ days_to_double = log(2) / coef(model1)[2]
 data_plot_death = subset(deaths_my, select = c(date, deaths_new))
 data_plot_death$total_deaths = cumsum(data_plot_death$deaths_new)
 data_plot_death = rename(data_plot_death, new_deaths = deaths_new)
-
-# ICU data - for plotting
-data_plot_icu = icu_my
-data_plot_icu_state = icu_state
 
 # State cases - for plotting
 data_plot_cases_state = cases_state
@@ -509,7 +517,6 @@ plot_case = ggplot(data_plot_case) +
   labs(x = "Date", y = "New cases", title = paste0("New cases by ", format(sel_date, "%d %B %Y"))) +
   #theme(axis.text.x = element_text(angle = 45, hjust = 1))# +
   theme_classic()
-plot_case
 ggplotly(plot_case)
 ```
 
@@ -547,7 +554,6 @@ plot_total_case = ggplot(data_plot_case) +
   annotate(geom = "text", x = as.Date("2021-08-10")+2, y = max(data_plot_case$total_cases, na.rm=T)-offset_total_case, label = "Free\nTravel\nfor\nVaccinated", angle = 90) +
   labs(x = "Date", y = "Cumulative cases", title = paste0("Total cases by ", format(sel_date, "%d %B %Y"))) +
   theme_classic()
-plot_total_case
 ggplotly(plot_total_case)
 ```
 
@@ -696,7 +702,6 @@ plot_death = ggplot(data_plot_death) +
   annotate(geom = "text", x = as.Date("2021-08-10")+2, y = max(data_plot_death$new_deaths, na.rm=T)-offset_death, label = "Free\nTravel\nfor\nVaccinated", angle = 90) +
   labs(x = "Date", y = "New deaths", title = paste0("New deaths by ", format(sel_date, "%d %B %Y"))) +
   theme_classic()
-plot_death
 ggplotly(plot_death)
 ```
 
@@ -734,7 +739,6 @@ plot_total_death = ggplot(data_plot_death) +
   annotate(geom = "text", x = as.Date("2021-08-10")+2, y = max(data_plot_death$total_deaths, na.rm=T)-offset_total_death, label = "Free\nTravel\nfor\nVaccinated", angle = 90) +
   labs(x = "Date", y = "Cumulative deaths", title = paste0("Total deaths by ", format(sel_date, "%d %B %Y"))) +
   theme_classic()
-plot_total_death
 ggplotly(plot_total_death)
 ```
 
@@ -861,7 +865,6 @@ plot_icu = ggplot(data_plot_icu, aes(x = date)) +
   #theme(axis.text.x = element_text(angle = 45, hjust = 1))# +
   scale_colour_manual(values = colors) +
   theme_classic()
-plot_icu
 ggplotly(plot_icu)
 ```
 
@@ -903,7 +906,6 @@ plot_vent = ggplot(data_plot_icu, aes(x = date)) +
   #theme(axis.text.x = element_text(angle = 45, hjust = 1))# +
   scale_colour_manual(values = colors) +
   theme_classic()
-plot_vent
 ggplotly(plot_vent)
 ```
 
@@ -954,8 +956,6 @@ plot_cases_state = ggplot(data = data_plot_cases_state) +
 
   theme_classic()
 
-plot_cases_state
-
 ggplotly(plot_cases_state)
 
 ```
@@ -979,8 +979,6 @@ plot_cases_state_cum = ggplot(data = data_plot_cases_state) +
   labs(x="Date", y="Cumulative cases") +
 
   theme_classic()
-
-plot_cases_state_cum
 
 ggplotly(plot_cases_state_cum)
 
@@ -1024,8 +1022,6 @@ plot_deaths_state = ggplot(data = data_plot_deaths_state) +
 
   theme_classic()
 
-plot_deaths_state
-
 ggplotly(plot_deaths_state)
 
 ```
@@ -1050,29 +1046,29 @@ plot_deaths_state_cum = ggplot(data = data_plot_deaths_state) +
 
   theme_classic()
 
-plot_deaths_state_cum
-
 ggplotly(plot_deaths_state_cum)
 
 ```
 
-# ICU by State
+# ICU by State {data-orientation=columns}
 
-## Row
+<!-- ## Row -->
 
-### Data by `r paste0(format(sel_date_icu, "%d %B %Y"), ", 11:59PM")`. {.value-box}
+<!-- ### Data by `r paste0(format(sel_date_icu, "%d %B %Y"), ", 11:59PM")`. {.value-box} -->
 
-```{r}
+<!-- ```{r} -->
 
-valueBox(
+<!-- valueBox( -->
 
-  value = "",
+<!--   value = "", -->
 
-)
+<!-- ) -->
 
-```
+<!-- ``` -->
 
-## Row
+Data by `r paste0(format(sel_date_icu, "%d %B %Y"), ", 11:59PM")`.
+
+## Column {.tabset}
 
 ### ICU beds used for COVID-19, hover/tap on the graph for details.
 
@@ -1090,15 +1086,31 @@ plot_icu_state = ggplot(data = data_plot_icu_state) +
 
   scale_fill_discrete(name="State") +
 
-  labs(x="Date", y="ICU beds") +
+  labs(x="Date", y="ICU beds", title = paste0("ICU beds used for COVID-19 by ", format(sel_date_icu, "%d %B %Y"))) +
 
   theme_classic()
-
-plot_icu_state
 
 ggplotly(plot_icu_state)
 
 ```
+
+### ICU bed utilization % for COVID-19, hover/tap on the graph for details.
+```{r}
+# today
+
+plot_icu_state = ggplot(subset(data_plot_icu_state_my, date == sel_date_icu)) +
+  geom_col(aes(y = state, x = icu_util_percent, fill = state), alpha = 0.7) +
+  scale_y_discrete(limits = rev) +
+  geom_vline(xintercept = 50, linetype = "dotted") + 
+  geom_vline(xintercept = 100, linetype = "dotted") + 
+  scale_fill_discrete(name = "State") +
+  labs(y = "State", x = "ICU Utilization %", title = paste0("ICU Utilization % on ", format(sel_date_icu, "%d %B %Y"))) +
+  theme_classic()
+
+ggplotly(plot_icu_state)
+```
+
+## Column {.tabset}
 
 ### Ventilators used for COVID-19, hover/tap on the graph for details.
 
@@ -1116,14 +1128,28 @@ plot_vent_state_cum = ggplot(data = data_plot_icu_state) +
 
   scale_fill_discrete(name="State") +
 
-  labs(x="Date", y="Ventilators") +
+  labs(x="Date", y="Ventilators", title = paste0("Ventilators used for COVID-19 by ", format(sel_date_icu, "%d %B %Y"))) +
 
   theme_classic()
 
-plot_vent_state_cum
-
 ggplotly(plot_vent_state_cum)
 
+```
+
+### Ventilator utilization % for COVID-19, hover/tap on the graph for details.
+```{r}
+# today
+
+plot_vent_state = ggplot(subset(data_plot_icu_state_my, date == sel_date_icu)) +
+  geom_col(aes(y = state, x = vent_util_percent, fill = state), alpha = 0.7) +
+  scale_y_discrete(limits = rev) +
+  geom_vline(xintercept = 50, linetype = "dotted") + 
+  geom_vline(xintercept = 100, linetype = "dotted") + 
+  scale_fill_discrete(name = "State") +
+  labs(y = "State", x = "Ventilator Utilization %", title = paste0("Ventilator Utilization % on ", format(sel_date_icu, "%d %B %Y"))) +
+  theme_classic()
+
+ggplotly(plot_vent_state)
 ```
 
 # Data and Our Team
